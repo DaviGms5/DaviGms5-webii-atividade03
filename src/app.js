@@ -1,4 +1,3 @@
-//src/app.js
 import express from "express";
 import prisma from "./config/database.js";
 
@@ -6,6 +5,7 @@ const app = express();
 
 app.use(express.json());
 
+// 1. GET /health
 app.get("/health", async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -33,6 +33,7 @@ app.get("/health", async (req, res) => {
   }
 });
 
+// 2. GET /users
 app.get("/users", async (req, res) => {
   try {
     const usuarios = await prisma.user.findMany({
@@ -62,6 +63,66 @@ app.get("/users", async (req, res) => {
   }
 });
 
+// 3. GET /subjects
+app.get("/subjects", async (req, res) => {
+  try {
+    const subjects = await prisma.subject.findMany({
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: subjects,
+      total: subjects.length,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar matérias:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Erro interno do servidor",
+    });
+  }
+});
+
+// 4. GET /questions
+app.get("/questions", async (req, res) => {
+  try {
+    const questions = await prisma.question.findMany({
+      include: {
+        subject: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: questions,
+      total: questions.length,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar questões:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Erro interno do servidor",
+    });
+  }
+});
+
+// Middleware 404: DEVE ficar SEMPRE por último, depois de todas as rotas!
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -69,77 +130,4 @@ app.use((req, res) => {
   });
 });
 
-const express = require('express');
-const { PrismaClient } = require('@prisma/client');
-
-const app = express();
-const prisma = new PrismaClient();
-
-app.use(express.json());
-
-// 1. GET /subjects
-app.get('/subjects', async (req, res) => {
-  try {
-    const subjects = await prisma.subject.findMany({
-      include: {
-        // Inclui o professor responsável selecionando apenas os dados públicos
-        teacher: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-            // NUNCA inclua a senha/password aqui
-          }
-        }
-      }
-    });
-
-    return res.status(200).json({
-      success: true,
-      data: subjects,
-      total: subjects.length
-    });
-  } catch (error) {
-    // Retorna status 500 em caso de erro sem expor detalhes do erro do banco
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-// 2. GET /questions
-app.get('/questions', async (req, res) => {
-  try {
-    const questions = await prisma.question.findMany({
-      include: {
-        // Inclui a matéria
-        subject: true,
-        // Inclui o autor selecionando apenas os dados públicos
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-            // NUNCA inclua a senha/password aqui
-          }
-        }
-      }
-    });
-
-    return res.status(200).json({
-      success: true,
-      data: questions,
-      total: questions.length
-    });
-  } catch (error) {
-    // Retorna status 500 sem expor detalhes internos
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-module.exports = app;
 export default app;
