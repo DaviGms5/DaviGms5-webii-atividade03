@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider               = "prisma-client"
   output                 = "../generated/prisma"
@@ -26,5 +24,39 @@ model User {
   createdAt DateTime @default(now()) @map("data_criacao")
   updatedAt DateTime @updatedAt @map("data_atualizacao")
 
+  subjects  Subject[]
+  questions Question[] @relation("QuestionAuthor")
+
   @@map("users")
+}
+
+model Subject {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  ativa       Boolean  @default(true)
+  professorId Int      @map("professor_id")
+  createdAt   DateTime @default(now()) @map("data_criacao")
+  updatedAt   DateTime @updatedAt @map("data_atualizacao")
+
+  professor User       @relation(fields: [professorId], references: [id])
+  questions Question[]
+
+  @@map("subjects")
+}
+
+model Question {
+  id              Int      @id @default(autoincrement())
+  enunciado       String
+  dificuldade     Int
+  respostaCorreta String?  @map("resposta_correta")
+  disciplinaId    Int      @map("disciplina_id")
+  autorId         Int      @map("autor_id")
+  ativa           Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("data_criacao")
+  updatedAt       DateTime @updatedAt @map("data_atualizacao")
+
+  disciplina Subject @relation(fields: [disciplinaId], references: [id])
+  autor      User    @relation("QuestionAuthor", fields: [autorId], references: [id])
+
+  @@map("questions")
 }
