@@ -1,40 +1,39 @@
-import express from "express";
-import prisma from "./config/database.js";
+//src/app.js
+import express from 'express';
+import prisma from './config/database.js';
 
 const app = express();
 
 app.use(express.json());
 
-// 1. GET /health
-app.get("/health", async (req, res) => {
+app.get('/health', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
 
     res.status(200).json({
-      status: "OK",
-      message: "API do Gerador de Provas",
+      status: 'OK',
+      message: 'API do Gerador de Provas',
       timestamp: new Date().toISOString(),
       services: {
-        api: "OK",
-        database: { status: "OK" },
+        api: 'OK',
+        database: { status: 'OK' },
       },
     });
   } catch (error) {
-    console.error("Erro na verificação do banco:", error);
+    console.error('Erro na verificação do banco:', error);
 
     res.status(503).json({
-      status: "DEGRADED",
-      message: "API do Gerador de Provas",
+      status: 'DEGRADED',
+      message: 'API do Gerador de Provas',
       services: {
-        api: "OK",
-        database: { status: "ERROR" },
+        api: 'OK',
+        database: { status: 'ERROR' },
       },
     });
   }
 });
 
-// 2. GET /users
-app.get("/users", async (req, res) => {
+app.get('/users', async (req, res) => {
   try {
     const usuarios = await prisma.user.findMany({
       select: {
@@ -45,7 +44,7 @@ app.get("/users", async (req, res) => {
         foto: true,
         createdAt: true,
       },
-      orderBy: { id: "asc" },
+      orderBy: { id: 'asc' },
     });
 
     res.status(200).json({
@@ -54,79 +53,98 @@ app.get("/users", async (req, res) => {
       total: usuarios.length,
     });
   } catch (error) {
-    console.error("Erro ao buscar usuários:", error);
+    console.error('Erro ao buscar usuário(s):', error);
 
     res.status(500).json({
       success: false,
-      message: "Erro ao buscar usuários",
+      message: 'Erro ao buscar usuário(s)',
     });
   }
 });
 
-// 3. GET /subjects
-app.get("/subjects", async (req, res) => {
+app.get('/subjects', async (req, res) => {
   try {
-    const subjects = await prisma.subject.findMany({
-      include: {
-        teacher: {
+    const disciplinas = await prisma.subject.findMany({
+      select: {
+        id: true,
+        nome: true,
+        ativa: true,
+        professor: {
           select: {
             id: true,
-            name: true,
+            nome: true,
             email: true,
+            foto: true,
           },
         },
+        createdAt: true,
       },
+      orderBy: { id: 'asc' },
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      data: subjects,
-      total: subjects.length,
+      data: disciplinas,
+      total: disciplinas.length,
     });
   } catch (error) {
-    console.error("Erro ao buscar matérias:", error);
-    return res.status(500).json({
+    console.error('Erro ao buscar disciplina(s):', error);
+
+    res.status(500).json({
       success: false,
-      message: "Erro interno do servidor",
+      message: 'Erro ao buscar disciplina(s)',
     });
   }
 });
 
-// 4. GET /questions
-app.get("/questions", async (req, res) => {
+app.get('/questions', async (req, res) => {
   try {
-    const questions = await prisma.question.findMany({
-      include: {
-        subject: true,
+    const questoes = await prisma.question.findMany({
+      select: {
+        id: true,
+        enunciado: true,
+        dificuldade: true,
+        resposta_correta: true,
+        ativa: true,
+        subject: {
+          select: {
+            id: true,
+            nome: true,
+            ativa: true,
+          },
+        },
         author: {
           select: {
             id: true,
-            name: true,
+            nome: true,
             email: true,
+            foto: true,
           },
         },
+        createdAt: true,
       },
+      orderBy: { id: 'asc' },
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      data: questions,
-      total: questions.length,
+      data: questoes,
+      total: questoes.length,
     });
   } catch (error) {
-    console.error("Erro ao buscar questões:", error);
-    return res.status(500).json({
+    console.error('Erro ao buscar questão(ões):', error);
+
+    res.status(500).json({
       success: false,
-      message: "Erro interno do servidor",
+      message: 'Erro ao buscar questão(ões)',
     });
   }
 });
 
-// Middleware 404: DEVE ficar SEMPRE por último, depois de todas as rotas!
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: "Rota " + req.method + " " + req.originalUrl + " não encontrada",
+    message: 'Rota ' + req.method + ' ' + req.originalUrl + ' não encontrada',
   });
 });
 

@@ -51,9 +51,9 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  User: 'User',
   Subject: 'Subject',
-  Question: 'Question'
+  Question: 'Question',
+  User: 'User'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -72,24 +72,11 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const UserScalarFieldEnum = {
-  id: 'id',
-  nome: 'nome',
-  email: 'email',
-  foto: 'foto',
-  papel: 'papel',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
-
-
 export const SubjectScalarFieldEnum = {
   id: 'id',
   nome: 'nome',
   ativa: 'ativa',
-  professorId: 'professorId',
+  professor_id: 'professor_id',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -101,15 +88,28 @@ export const QuestionScalarFieldEnum = {
   id: 'id',
   enunciado: 'enunciado',
   dificuldade: 'dificuldade',
-  respostaCorreta: 'respostaCorreta',
-  disciplinaId: 'disciplinaId',
-  autorId: 'autorId',
+  resposta_correta: 'resposta_correta',
+  subject_id: 'subject_id',
+  author_id: 'author_id',
   ativa: 'ativa',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  nome: 'nome',
+  email: 'email',
+  foto: 'foto',
+  papel: 'papel',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
 export const SortOrder = {
