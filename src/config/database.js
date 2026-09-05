@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../generated/prisma/client.ts";
+import { PrismaClient } from "../../generated/prisma/client"; // Removido a extensão .ts
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 const adapter = new PrismaPg({

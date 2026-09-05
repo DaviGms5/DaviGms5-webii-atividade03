@@ -28,19 +28,19 @@ export type AggregateSubject = {
 
 export type SubjectAvgAggregateOutputType = {
   id: number | null
-  professor_id: number | null
+  professorId: number | null
 }
 
 export type SubjectSumAggregateOutputType = {
   id: number | null
-  professor_id: number | null
+  professorId: number | null
 }
 
 export type SubjectMinAggregateOutputType = {
   id: number | null
   nome: string | null
   ativa: boolean | null
-  professor_id: number | null
+  professorId: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -49,7 +49,7 @@ export type SubjectMaxAggregateOutputType = {
   id: number | null
   nome: string | null
   ativa: boolean | null
-  professor_id: number | null
+  professorId: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -58,7 +58,7 @@ export type SubjectCountAggregateOutputType = {
   id: number
   nome: number
   ativa: number
-  professor_id: number
+  professorId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -67,19 +67,19 @@ export type SubjectCountAggregateOutputType = {
 
 export type SubjectAvgAggregateInputType = {
   id?: true
-  professor_id?: true
+  professorId?: true
 }
 
 export type SubjectSumAggregateInputType = {
   id?: true
-  professor_id?: true
+  professorId?: true
 }
 
 export type SubjectMinAggregateInputType = {
   id?: true
   nome?: true
   ativa?: true
-  professor_id?: true
+  professorId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -88,7 +88,7 @@ export type SubjectMaxAggregateInputType = {
   id?: true
   nome?: true
   ativa?: true
-  professor_id?: true
+  professorId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -97,7 +97,7 @@ export type SubjectCountAggregateInputType = {
   id?: true
   nome?: true
   ativa?: true
-  professor_id?: true
+  professorId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -193,7 +193,7 @@ export type SubjectGroupByOutputType = {
   id: number
   nome: string
   ativa: boolean
-  professor_id: number
+  professorId: number
   createdAt: Date
   updatedAt: Date
   _count: SubjectCountAggregateOutputType | null
@@ -225,7 +225,7 @@ export type SubjectWhereInput = {
   id?: Prisma.IntFilter<"Subject"> | number
   nome?: Prisma.StringFilter<"Subject"> | string
   ativa?: Prisma.BoolFilter<"Subject"> | boolean
-  professor_id?: Prisma.IntFilter<"Subject"> | number
+  professorId?: Prisma.IntFilter<"Subject"> | number
   createdAt?: Prisma.DateTimeFilter<"Subject"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Subject"> | Date | string
   professor?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -236,7 +236,7 @@ export type SubjectOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   professor?: Prisma.UserOrderByWithRelationInput
@@ -250,7 +250,7 @@ export type SubjectWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SubjectWhereInput | Prisma.SubjectWhereInput[]
   nome?: Prisma.StringFilter<"Subject"> | string
   ativa?: Prisma.BoolFilter<"Subject"> | boolean
-  professor_id?: Prisma.IntFilter<"Subject"> | number
+  professorId?: Prisma.IntFilter<"Subject"> | number
   createdAt?: Prisma.DateTimeFilter<"Subject"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Subject"> | Date | string
   professor?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -261,7 +261,7 @@ export type SubjectOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   ativa?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SubjectCountOrderByAggregateInput
@@ -278,7 +278,7 @@ export type SubjectScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Subject"> | number
   nome?: Prisma.StringWithAggregatesFilter<"Subject"> | string
   ativa?: Prisma.BoolWithAggregatesFilter<"Subject"> | boolean
-  professor_id?: Prisma.IntWithAggregatesFilter<"Subject"> | number
+  professorId?: Prisma.IntWithAggregatesFilter<"Subject"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Subject"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Subject"> | Date | string
 }
@@ -296,7 +296,7 @@ export type SubjectUncheckedCreateInput = {
   id?: number
   nome: string
   ativa?: boolean
-  professor_id: number
+  professorId: number
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutSubjectInput
@@ -315,7 +315,7 @@ export type SubjectUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  professor_id?: Prisma.IntFieldUpdateOperationsInput | number
+  professorId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutSubjectNestedInput
@@ -325,7 +325,7 @@ export type SubjectCreateManyInput = {
   id?: number
   nome: string
   ativa?: boolean
-  professor_id: number
+  professorId: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -341,51 +341,9 @@ export type SubjectUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  professor_id?: Prisma.IntFieldUpdateOperationsInput | number
+  professorId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type SubjectCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  nome?: Prisma.SortOrder
-  ativa?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-}
-
-export type SubjectAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
-}
-
-export type SubjectMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  nome?: Prisma.SortOrder
-  ativa?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-}
-
-export type SubjectMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  nome?: Prisma.SortOrder
-  ativa?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-}
-
-export type SubjectSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  professor_id?: Prisma.SortOrder
-}
-
-export type SubjectScalarRelationFilter = {
-  is?: Prisma.SubjectWhereInput
-  isNot?: Prisma.SubjectWhereInput
 }
 
 export type SubjectListRelationFilter = {
@@ -398,38 +356,46 @@ export type SubjectOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
+export type SubjectCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  nome?: Prisma.SortOrder
+  ativa?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type SubjectAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
+export type SubjectMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  nome?: Prisma.SortOrder
+  ativa?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
+export type SubjectMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  nome?: Prisma.SortOrder
+  ativa?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
-export type SubjectCreateNestedOneWithoutQuestionsInput = {
-  create?: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
-  connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutQuestionsInput
-  connect?: Prisma.SubjectWhereUniqueInput
+export type SubjectSumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  professorId?: Prisma.SortOrder
 }
 
-export type SubjectUpdateOneRequiredWithoutQuestionsNestedInput = {
-  create?: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
-  connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutQuestionsInput
-  upsert?: Prisma.SubjectUpsertWithoutQuestionsInput
-  connect?: Prisma.SubjectWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.SubjectUpdateToOneWithWhereWithoutQuestionsInput, Prisma.SubjectUpdateWithoutQuestionsInput>, Prisma.SubjectUncheckedUpdateWithoutQuestionsInput>
+export type SubjectScalarRelationFilter = {
+  is?: Prisma.SubjectWhereInput
+  isNot?: Prisma.SubjectWhereInput
 }
 
 export type SubjectCreateNestedManyWithoutProfessorInput = {
@@ -474,54 +440,22 @@ export type SubjectUncheckedUpdateManyWithoutProfessorNestedInput = {
   deleteMany?: Prisma.SubjectScalarWhereInput | Prisma.SubjectScalarWhereInput[]
 }
 
-export type SubjectCreateWithoutQuestionsInput = {
-  nome: string
-  ativa?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  professor: Prisma.UserCreateNestedOneWithoutSubjectsInput
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
-export type SubjectUncheckedCreateWithoutQuestionsInput = {
-  id?: number
-  nome: string
-  ativa?: boolean
-  professor_id: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
+export type SubjectCreateNestedOneWithoutQuestionsInput = {
+  create?: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
+  connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutQuestionsInput
+  connect?: Prisma.SubjectWhereUniqueInput
 }
 
-export type SubjectCreateOrConnectWithoutQuestionsInput = {
-  where: Prisma.SubjectWhereUniqueInput
-  create: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
-}
-
-export type SubjectUpsertWithoutQuestionsInput = {
-  update: Prisma.XOR<Prisma.SubjectUpdateWithoutQuestionsInput, Prisma.SubjectUncheckedUpdateWithoutQuestionsInput>
-  create: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
-  where?: Prisma.SubjectWhereInput
-}
-
-export type SubjectUpdateToOneWithWhereWithoutQuestionsInput = {
-  where?: Prisma.SubjectWhereInput
-  data: Prisma.XOR<Prisma.SubjectUpdateWithoutQuestionsInput, Prisma.SubjectUncheckedUpdateWithoutQuestionsInput>
-}
-
-export type SubjectUpdateWithoutQuestionsInput = {
-  nome?: Prisma.StringFieldUpdateOperationsInput | string
-  ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  professor?: Prisma.UserUpdateOneRequiredWithoutSubjectsNestedInput
-}
-
-export type SubjectUncheckedUpdateWithoutQuestionsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  nome?: Prisma.StringFieldUpdateOperationsInput | string
-  ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  professor_id?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+export type SubjectUpdateOneRequiredWithoutQuestionsNestedInput = {
+  create?: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
+  connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutQuestionsInput
+  upsert?: Prisma.SubjectUpsertWithoutQuestionsInput
+  connect?: Prisma.SubjectWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SubjectUpdateToOneWithWhereWithoutQuestionsInput, Prisma.SubjectUpdateWithoutQuestionsInput>, Prisma.SubjectUncheckedUpdateWithoutQuestionsInput>
 }
 
 export type SubjectCreateWithoutProfessorInput = {
@@ -574,9 +508,59 @@ export type SubjectScalarWhereInput = {
   id?: Prisma.IntFilter<"Subject"> | number
   nome?: Prisma.StringFilter<"Subject"> | string
   ativa?: Prisma.BoolFilter<"Subject"> | boolean
-  professor_id?: Prisma.IntFilter<"Subject"> | number
+  professorId?: Prisma.IntFilter<"Subject"> | number
   createdAt?: Prisma.DateTimeFilter<"Subject"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Subject"> | Date | string
+}
+
+export type SubjectCreateWithoutQuestionsInput = {
+  nome: string
+  ativa?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  professor: Prisma.UserCreateNestedOneWithoutSubjectsInput
+}
+
+export type SubjectUncheckedCreateWithoutQuestionsInput = {
+  id?: number
+  nome: string
+  ativa?: boolean
+  professorId: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SubjectCreateOrConnectWithoutQuestionsInput = {
+  where: Prisma.SubjectWhereUniqueInput
+  create: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
+}
+
+export type SubjectUpsertWithoutQuestionsInput = {
+  update: Prisma.XOR<Prisma.SubjectUpdateWithoutQuestionsInput, Prisma.SubjectUncheckedUpdateWithoutQuestionsInput>
+  create: Prisma.XOR<Prisma.SubjectCreateWithoutQuestionsInput, Prisma.SubjectUncheckedCreateWithoutQuestionsInput>
+  where?: Prisma.SubjectWhereInput
+}
+
+export type SubjectUpdateToOneWithWhereWithoutQuestionsInput = {
+  where?: Prisma.SubjectWhereInput
+  data: Prisma.XOR<Prisma.SubjectUpdateWithoutQuestionsInput, Prisma.SubjectUncheckedUpdateWithoutQuestionsInput>
+}
+
+export type SubjectUpdateWithoutQuestionsInput = {
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  professor?: Prisma.UserUpdateOneRequiredWithoutSubjectsNestedInput
+}
+
+export type SubjectUncheckedUpdateWithoutQuestionsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  ativa?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  professorId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type SubjectCreateManyProfessorInput = {
@@ -647,7 +631,7 @@ export type SubjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   id?: boolean
   nome?: boolean
   ativa?: boolean
-  professor_id?: boolean
+  professorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   professor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -659,7 +643,7 @@ export type SubjectSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   nome?: boolean
   ativa?: boolean
-  professor_id?: boolean
+  professorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   professor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -669,7 +653,7 @@ export type SubjectSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   id?: boolean
   nome?: boolean
   ativa?: boolean
-  professor_id?: boolean
+  professorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   professor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -679,12 +663,12 @@ export type SubjectSelectScalar = {
   id?: boolean
   nome?: boolean
   ativa?: boolean
-  professor_id?: boolean
+  professorId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SubjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "ativa" | "professor_id" | "createdAt" | "updatedAt", ExtArgs["result"]["subject"]>
+export type SubjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "ativa" | "professorId" | "createdAt" | "updatedAt", ExtArgs["result"]["subject"]>
 export type SubjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   professor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   questions?: boolean | Prisma.Subject$questionsArgs<ExtArgs>
@@ -707,7 +691,7 @@ export type $SubjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: number
     nome: string
     ativa: boolean
-    professor_id: number
+    professorId: number
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["subject"]>
@@ -1138,7 +1122,7 @@ export interface SubjectFieldRefs {
   readonly id: Prisma.FieldRef<"Subject", 'Int'>
   readonly nome: Prisma.FieldRef<"Subject", 'String'>
   readonly ativa: Prisma.FieldRef<"Subject", 'Boolean'>
-  readonly professor_id: Prisma.FieldRef<"Subject", 'Int'>
+  readonly professorId: Prisma.FieldRef<"Subject", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Subject", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Subject", 'DateTime'>
 }

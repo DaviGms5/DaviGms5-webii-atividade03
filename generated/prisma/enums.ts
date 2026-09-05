@@ -15,12 +15,3 @@ export const Papel = {
 } as const
 
 export type Papel = (typeof Papel)[keyof typeof Papel]
-
-
-export const Dificuldade = {
-  FACIL: 'FACIL',
-  MEDIA: 'MEDIA',
-  DIFICIL: 'DIFICIL'
-} as const
-
-export type Dificuldade = (typeof Dificuldade)[keyof typeof Dificuldade]
