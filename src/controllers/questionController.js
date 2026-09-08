@@ -6,7 +6,7 @@ export const createQuestion = async (req, res) => {
 
     // 1. Validação de campos obrigatórios
     if (!enunciado || dificuldade === undefined || subjectId === undefined || authorId === undefined) {
-      return res.status(400).json({ message: 'Enunciado, dificuldade, subjectId e authorId são obrigatórios.' });
+      return res.status(400).json({ success: false, message: 'Enunciado, dificuldade, subjectId e authorId são obrigatórios.' });
     }
 
     // 2. Validação de IDs e valores inteiros
@@ -15,15 +15,15 @@ export const createQuestion = async (req, res) => {
     const parsedDificuldade = Number(dificuldade);
 
     if (!Number.isInteger(parsedSubjectId) || parsedSubjectId <= 0) {
-      return res.status(400).json({ message: 'O subjectId deve ser um número inteiro positivo.' });
+      return res.status(400).json({ success: false, message: 'O subjectId deve ser um número inteiro positivo.' });
     }
 
     if (!Number.isInteger(parsedAuthorId) || parsedAuthorId <= 0) {
-      return res.status(400).json({ message: 'O authorId deve ser um número inteiro positivo.' });
+      return res.status(400).json({ success: false, message: 'O authorId deve ser um número inteiro positivo.' });
     }
 
     if (![1, 2, 3].includes(parsedDificuldade)) {
-      return res.status(400).json({ message: 'A dificuldade deve ser 1 (Fácil), 2 (Média) ou 3 (Difícil).' });
+      return res.status(400).json({ success: false, message: 'A dificuldade deve ser 1 (Fácil), 2 (Média) ou 3 (Difícil).' });
     }
 
     // 3. Confirmar que a matéria e o autor existem antes de criar
@@ -33,11 +33,11 @@ export const createQuestion = async (req, res) => {
     ]);
 
     if (!subjectExists) {
-      return res.status(404).json({ message: 'Matéria informada não existe.' });
+      return res.status(404).json({ success: false, message: 'Matéria informada não existe.' });
     }
 
     if (!authorExists) {
-      return res.status(404).json({ message: 'Autor informado não existe.' });
+      return res.status(404).json({ success: false, message: 'Autor informado não existe.' });
     }
 
     // Criação da questão
@@ -49,7 +49,6 @@ export const createQuestion = async (req, res) => {
         subjectId: parsedSubjectId,
         authorId: parsedAuthorId
       },
-      // 5. Select para retornar somente dados públicos nas relações
       select: {
         id: true,
         enunciado: true,
@@ -73,10 +72,12 @@ export const createQuestion = async (req, res) => {
       }
     });
 
-    return res.status(201).json(question);
+    return res.status(201).json({
+      success: true,
+      data: question
+    });
   } catch (error) {
-    // 4. Nunca devolver detalhes internos do erro
-    return res.status(500).json({ message: 'Erro interno no servidor.' });
+    return res.status(500).json({ success: false, message: 'Erro interno no servidor.' });
   }
 };
 
@@ -106,9 +107,13 @@ export const getQuestions = async (req, res) => {
       }
     });
 
-    return res.status(200).json(questions);
+    return res.status(200).json({
+      success: true,
+      data: questions,
+      total: questions.length
+    });
   } catch (error) {
-    return res.status(500).json({ message: 'Erro interno no servidor.' });
+    return res.status(500).json({ success: false, message: 'Erro interno no servidor.' });
   }
 };
 
@@ -118,7 +123,7 @@ export const getQuestionById = async (req, res) => {
     const parsedId = Number(id);
 
     if (!Number.isInteger(parsedId) || parsedId <= 0) {
-      return res.status(400).json({ message: 'O ID deve ser um número inteiro positivo.' });
+      return res.status(400).json({ success: false, message: 'O ID deve ser um número inteiro positivo.' });
     }
 
     const question = await prisma.question.findUnique({
@@ -147,11 +152,14 @@ export const getQuestionById = async (req, res) => {
     });
 
     if (!question) {
-      return res.status(404).json({ message: 'Questão não encontrada.' });
+      return res.status(404).json({ success: false, message: 'Questão não encontrada.' });
     }
 
-    return res.status(200).json(question);
+    return res.status(200).json({
+      success: true,
+      data: question
+    });
   } catch (error) {
-    return res.status(500).json({ message: 'Erro interno no servidor.' });
+    return res.status(500).json({ success: false, message: 'Erro interno no servidor.' });
   }
 };
