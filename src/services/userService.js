@@ -1,4 +1,4 @@
-import prisma from "../config/database.js";
+import prisma from '../config/database.js';
 
 const publicUserSelect = {
   id: true,
@@ -15,7 +15,7 @@ const publicUserSelect = {
  * @param {string} email - E-mail informado na requisição.
  * @returns {string} E-mail sem espaços nas extremidades e em letras minúsculas.
  */
-const normalizeEmail = (email) => email.trim().toLowerCase();
+const normalizeEmail = email => email.trim().toLowerCase();
 
 /**
  * Busca todos os usuários no formato público, do mais recente para o mais antigo.
@@ -24,7 +24,7 @@ const normalizeEmail = (email) => email.trim().toLowerCase();
 export const getAllUsers = async () => {
   return prisma.user.findMany({
     select: publicUserSelect,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
   });
 };
 
@@ -33,7 +33,7 @@ export const getAllUsers = async () => {
  * @param {number} userId - ID do usuário.
  * @returns {Promise<Object|null>} Usuário encontrado ou `null` quando ele não existe.
  */
-export const getUserById = async (userId) => {
+export const getUserById = async userId => {
   return prisma.user.findUnique({
     where: { id: userId },
     select: publicUserSelect,
@@ -45,7 +45,7 @@ export const getUserById = async (userId) => {
  * @param {{ nome: string, email: string, papel?: string, foto?: string|null }} userData - Dados recebidos pelo controller.
  * @returns {Promise<{ ok: boolean, data?: Object, reason?: string }>} Resultado da criação ou o motivo do conflito.
  */
-export const createUser = async (userData) => {
+export const createUser = async userData => {
   const email = normalizeEmail(userData.email);
   const emailOwner = await prisma.user.findUnique({
     where: { email },
@@ -53,7 +53,7 @@ export const createUser = async (userData) => {
   });
 
   if (emailOwner) {
-    return { ok: false, reason: "EMAIL_CONFLICT" };
+    return { ok: false, reason: 'EMAIL_CONFLICT' };
   }
 
   try {
@@ -61,7 +61,7 @@ export const createUser = async (userData) => {
       data: {
         nome: userData.nome.trim(),
         email,
-        papel: userData.papel ?? "PROFESSOR",
+        papel: userData.papel ?? 'PROFESSOR',
         foto: userData.foto?.trim() || null,
       },
       select: publicUserSelect,
@@ -69,8 +69,8 @@ export const createUser = async (userData) => {
 
     return { ok: true, data: usuario };
   } catch (error) {
-    if (error.code === "P2002") {
-      return { ok: false, reason: "EMAIL_CONFLICT" };
+    if (error.code === 'P2002') {
+      return { ok: false, reason: 'EMAIL_CONFLICT' };
     }
 
     throw error;
@@ -90,16 +90,16 @@ export const updateUser = async (userId, userData) => {
   });
 
   if (!usuarioExistente) {
-    return { ok: false, reason: "NOT_FOUND" };
+    return { ok: false, reason: 'NOT_FOUND' };
   }
 
   const data = {};
 
-  if (Object.hasOwn(userData, "nome")) {
+  if (Object.hasOwn(userData, 'nome')) {
     data.nome = userData.nome.trim();
   }
 
-  if (Object.hasOwn(userData, "email")) {
+  if (Object.hasOwn(userData, 'email')) {
     const email = normalizeEmail(userData.email);
     const emailOwner = await prisma.user.findUnique({
       where: { email },
@@ -107,17 +107,17 @@ export const updateUser = async (userId, userData) => {
     });
 
     if (emailOwner && emailOwner.id !== userId) {
-      return { ok: false, reason: "EMAIL_CONFLICT" };
+      return { ok: false, reason: 'EMAIL_CONFLICT' };
     }
 
     data.email = email;
   }
 
-  if (Object.hasOwn(userData, "papel")) {
+  if (Object.hasOwn(userData, 'papel')) {
     data.papel = userData.papel;
   }
 
-  if (Object.hasOwn(userData, "foto")) {
+  if (Object.hasOwn(userData, 'foto')) {
     data.foto = userData.foto?.trim() || null;
   }
 
@@ -130,8 +130,8 @@ export const updateUser = async (userId, userData) => {
 
     return { ok: true, data: usuario };
   } catch (error) {
-    if (error.code === "P2002") {
-      return { ok: false, reason: "EMAIL_CONFLICT" };
+    if (error.code === 'P2002') {
+      return { ok: false, reason: 'EMAIL_CONFLICT' };
     }
 
     throw error;
@@ -143,7 +143,7 @@ export const updateUser = async (userId, userData) => {
  * @param {number} userId - ID do usuário a remover.
  * @returns {Promise<{ ok: boolean, data?: Object, reason?: string }>} Usuário removido ou o motivo que impede a remoção.
  */
-export const deleteUser = async (userId) => {
+export const deleteUser = async userId => {
   const usuarioExistente = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -155,14 +155,14 @@ export const deleteUser = async (userId) => {
   });
 
   if (!usuarioExistente) {
-    return { ok: false, reason: "NOT_FOUND" };
+    return { ok: false, reason: 'NOT_FOUND' };
   }
 
   if (
     usuarioExistente._count.subjects > 0 ||
     usuarioExistente._count.questions > 0
   ) {
-    return { ok: false, reason: "USER_IN_USE" };
+    return { ok: false, reason: 'USER_IN_USE' };
   }
 
   try {
@@ -173,8 +173,8 @@ export const deleteUser = async (userId) => {
 
     return { ok: true, data: usuario };
   } catch (error) {
-    if (error.code === "P2003" || error.code === "P2014") {
-      return { ok: false, reason: "USER_IN_USE" };
+    if (error.code === 'P2003' || error.code === 'P2014') {
+      return { ok: false, reason: 'USER_IN_USE' };
     }
 
     throw error;

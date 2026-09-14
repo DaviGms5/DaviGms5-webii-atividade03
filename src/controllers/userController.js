@@ -1,7 +1,7 @@
-import * as userService from "../services/userService.js";
+import * as userService from '../services/userService.js';
 
-const allowedPatchFields = ["nome", "email", "papel", "foto"];
-const validRoles = ["PROFESSOR", "ADMIN"];
+const allowedPatchFields = ['nome', 'email', 'papel', 'foto'];
+const validRoles = ['PROFESSOR', 'ADMIN'];
 
 /**
  * Converte um valor de rota em um ID inteiro positivo, sem aceitar valores parciais.
@@ -19,7 +19,7 @@ function toPositiveInt(value) {
  * @returns {boolean} `true` quando há ao menos um campo permitido.
  */
 function hasAllowedPatchField(body) {
-  return allowedPatchFields.some((field) => Object.hasOwn(body, field));
+  return allowedPatchFields.some(field => Object.hasOwn(body, field));
 }
 
 /**
@@ -29,10 +29,10 @@ function hasAllowedPatchField(body) {
  */
 function hasInvalidUserFields({ nome, email, papel, foto }) {
   return (
-    (nome !== undefined && (typeof nome !== "string" || !nome.trim())) ||
-    (email !== undefined && (typeof email !== "string" || !email.trim())) ||
+    (nome !== undefined && (typeof nome !== 'string' || !nome.trim())) ||
+    (email !== undefined && (typeof email !== 'string' || !email.trim())) ||
     (papel !== undefined && !validRoles.includes(papel)) ||
-    (foto !== undefined && foto !== null && typeof foto !== "string")
+    (foto !== undefined && foto !== null && typeof foto !== 'string')
   );
 }
 
@@ -47,37 +47,38 @@ export const create = async (req, res) => {
     const { nome, email, papel, foto } = req.body;
 
     if (
-      typeof nome !== "string" ||
+      typeof nome !== 'string' ||
       !nome.trim() ||
-      typeof email !== "string" ||
+      typeof email !== 'string' ||
       !email.trim() ||
       hasInvalidUserFields({ nome, email, papel, foto })
     ) {
       return res.status(400).json({
         success: false,
-        message: "Nome e email são obrigatórios; papel e foto devem ser válidos",
+        message:
+          'Nome e email são obrigatórios; papel e foto devem ser válidos',
       });
     }
 
     const result = await userService.createUser({ nome, email, papel, foto });
 
-    if (!result.ok && result.reason === "EMAIL_CONFLICT") {
+    if (!result.ok && result.reason === 'EMAIL_CONFLICT') {
       return res.status(409).json({
         success: false,
-        message: "Email já cadastrado no sistema",
+        message: 'Email já cadastrado no sistema',
       });
     }
 
     return res.status(201).json({
       success: true,
-      message: "Usuário criado com sucesso",
+      message: 'Usuário criado com sucesso',
       data: result.data,
     });
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
+    console.error('Erro ao criar usuário:', error);
     return res.status(500).json({
       success: false,
-      message: "Erro ao criar usuário",
+      message: 'Erro ao criar usuário',
     });
   }
 };
@@ -98,10 +99,10 @@ export const getAll = async (_req, res) => {
       total: usuarios.length,
     });
   } catch (error) {
-    console.error("Erro ao listar usuários:", error);
+    console.error('Erro ao listar usuários:', error);
     return res.status(500).json({
       success: false,
-      message: "Erro ao listar usuários",
+      message: 'Erro ao listar usuários',
     });
   }
 };
@@ -119,7 +120,7 @@ export const getById = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "ID inválido. Deve ser um número inteiro positivo",
+        message: 'ID inválido. Deve ser um número inteiro positivo',
       });
     }
 
@@ -137,10 +138,10 @@ export const getById = async (req, res) => {
       data: usuario,
     });
   } catch (error) {
-    console.error("Erro ao buscar usuário:", error);
+    console.error('Erro ao buscar usuário:', error);
     return res.status(500).json({
       success: false,
-      message: "Erro ao buscar usuário",
+      message: 'Erro ao buscar usuário',
     });
   }
 };
@@ -158,43 +159,43 @@ export const update = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "ID inválido. Deve ser um número inteiro positivo",
+        message: 'ID inválido. Deve ser um número inteiro positivo',
       });
     }
 
     if (!hasAllowedPatchField(req.body) || hasInvalidUserFields(req.body)) {
       return res.status(400).json({
         success: false,
-        message: "Envie ao menos um campo válido: nome, email, papel ou foto",
+        message: 'Envie ao menos um campo válido: nome, email, papel ou foto',
       });
     }
 
     const result = await userService.updateUser(userId, req.body);
 
-    if (!result.ok && result.reason === "NOT_FOUND") {
+    if (!result.ok && result.reason === 'NOT_FOUND') {
       return res.status(404).json({
         success: false,
         message: `Usuário com ID ${userId} não encontrado`,
       });
     }
 
-    if (!result.ok && result.reason === "EMAIL_CONFLICT") {
+    if (!result.ok && result.reason === 'EMAIL_CONFLICT') {
       return res.status(409).json({
         success: false,
-        message: "Email já cadastrado no sistema",
+        message: 'Email já cadastrado no sistema',
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Usuário atualizado com sucesso",
+      message: 'Usuário atualizado com sucesso',
       data: result.data,
     });
   } catch (error) {
-    console.error("Erro ao atualizar usuário:", error);
+    console.error('Erro ao atualizar usuário:', error);
     return res.status(500).json({
       success: false,
-      message: "Erro ao atualizar usuário",
+      message: 'Erro ao atualizar usuário',
     });
   }
 };
@@ -212,36 +213,36 @@ export const remove = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "ID inválido. Deve ser um número inteiro positivo",
+        message: 'ID inválido. Deve ser um número inteiro positivo',
       });
     }
 
     const result = await userService.deleteUser(userId);
 
-    if (!result.ok && result.reason === "NOT_FOUND") {
+    if (!result.ok && result.reason === 'NOT_FOUND') {
       return res.status(404).json({
         success: false,
         message: `Usuário com ID ${userId} não encontrado`,
       });
     }
 
-    if (!result.ok && result.reason === "USER_IN_USE") {
+    if (!result.ok && result.reason === 'USER_IN_USE') {
       return res.status(409).json({
         success: false,
-        message: "Usuário possui matérias ou questões vinculadas",
+        message: 'Usuário possui matérias ou questões vinculadas',
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Usuário removido com sucesso",
+      message: 'Usuário removido com sucesso',
       data: result.data,
     });
   } catch (error) {
-    console.error("Erro ao remover usuário:", error);
+    console.error('Erro ao remover usuário:', error);
     return res.status(500).json({
       success: false,
-      message: "Erro ao remover usuário",
+      message: 'Erro ao remover usuário',
     });
   }
 };

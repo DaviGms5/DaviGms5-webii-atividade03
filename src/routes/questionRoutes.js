@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { 
-  createQuestion, 
-  getQuestions, 
-  getQuestionById 
+import {
+  createQuestion,
+  getQuestions,
+  getQuestionById,
 } from '../controllers/questionController.js';
 
 const router = Router();
