@@ -60,14 +60,18 @@ describe('Suíte de Testes da API (Subjects & Questions)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.nome).toBe('Matemática'); // Preservado
-      expect(res.body.data.ativa).toBe(false);      // Atualizado
+      expect(res.body.data.ativa).toBe(false); // Atualizado
     });
 
     it('Deve retornar 400 para ID inválido ou corpo de PATCH vazio', async () => {
-      const resId = await request(app).patch('/subjects/abc').send({ nome: 'Nova' });
+      const resId = await request(app)
+        .patch('/subjects/abc')
+        .send({ nome: 'Nova' });
       expect(resId.status).toBe(400);
 
-      const resBody = await request(app).patch(`/subjects/${createdSubjectId}`).send({});
+      const resBody = await request(app)
+        .patch(`/subjects/${createdSubjectId}`)
+        .send({});
       expect(resBody.status).toBe(400);
     });
 
@@ -83,15 +87,13 @@ describe('Suíte de Testes da API (Subjects & Questions)', () => {
   // --- QUESTIONS ---
   describe('Endpoints /questions', () => {
     it('Deve criar uma questão', async () => {
-      const res = await request(app)
-        .post('/questions')
-        .send({
-          enunciado: 'Quanto é 2 + 2?',
-          respostaCorreta: '4',
-          dificuldade: 1,
-          subjectId: createdSubjectId,
-          authorId: createdProfessorId,
-        });
+      const res = await request(app).post('/questions').send({
+        enunciado: 'Quanto é 2 + 2?',
+        respostaCorreta: '4',
+        dificuldade: 1,
+        subjectId: createdSubjectId,
+        authorId: createdProfessorId,
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.data).toHaveProperty('id');
@@ -123,7 +125,9 @@ describe('Suíte de Testes da API (Subjects & Questions)', () => {
     });
 
     it('Deve excluir a questão e confirmar exclusão com 404', async () => {
-      const resDelete = await request(app).delete(`/questions/${createdQuestionId}`);
+      const resDelete = await request(app).delete(
+        `/questions/${createdQuestionId}`,
+      );
       expect(resDelete.status).toBe(200);
 
       const resGet = await request(app).get(`/questions/${createdQuestionId}`);
@@ -131,7 +135,9 @@ describe('Suíte de Testes da API (Subjects & Questions)', () => {
     });
 
     it('Deve excluir a matéria com sucesso após remover as questões vinculadas', async () => {
-      const resDelete = await request(app).delete(`/subjects/${createdSubjectId}`);
+      const resDelete = await request(app).delete(
+        `/subjects/${createdSubjectId}`,
+      );
       expect(resDelete.status).toBe(200);
 
       const resGet = await request(app).get(`/subjects/${createdSubjectId}`);
