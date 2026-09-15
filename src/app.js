@@ -49,8 +49,8 @@ app.get('/health', async (req, res) => {
 
 // Rotas da API
 app.use('/users', userRoutes);
-app.use(subjectRoutes);
-app.use(questionRoutes);
+app.use('/subjects', subjectRoutes);
+app.use('/questions', questionRoutes);
 
 /**
  * Trata requisições que não corresponderam a nenhuma rota registrada.
