@@ -1,107 +1,167 @@
-import prisma from '../config/database.js';
+import prisma from "../config/database.js";
+import { NotFoundError } from "../errors/AppError.js";
 
-// Objeto reutilizável para incluir os relacionamentos
-const includeRelations = {
-  subject: true,
+const publicQuestionSelect = {
+  id: true,
+  enunciado: true,
+  dificuldade: true,
+  respostaCorreta: true,
+  ativa: true,
+  createdAt: true,
+  updatedAt: true,
+  subjectId: true,
+  authorId: true,
+  subject: {
+    select: { id: true, nome: true, ativa: true },
+  },
   author: {
-    select: { id: true, nome: true, email: true },
+    select: { id: true, nome: true, email: true, papel: true, foto: true },
   },
 };
 
-export const createQuestionService = async data => {
-  const { enunciado, respostaCorreta, dificuldade, subjectId, authorId } = data;
+export async function getAllQuestions() {
+  return prisma.question.findMany({
+    select: publicQuestionSelect,
+    orderBy: { createdAt: "desc" },
+  });
+}
 
-  const [subject, author] = await Promise.all([
-    prisma.subject.findUnique({ where: { id: subjectId } }),
-    prisma.user.findUnique({ where: { id: authorId } }),
-  ]);
-
-  if (!subject || !author) {
-    const error = new Error('Matéria ou autor não encontrado.');
-    error.statusCode = 404;
-    throw error;
+export async function getQuestionById(questionId) {
+  const id = Number(questionId);
+  if (!id || isNaN(id) || id <= 0) {
+    throw new NotFoundError(`Questão com ID ${questionId} não encontrada`);
   }
 
-  return await prisma.question.create({
+  const question = await prisma.question.findUnique({
+    where: { id },
+    select: publicQuestionSelect,
+  });
+
+  if (!question) {
+    throw new NotFoundError(`Questão com ID ${questionId} não encontrada`);
+  }
+
+  return question;
+}
+
+export async function createQuestion(data) {
+  const subjectId = Number(data?.subjectId);
+  const authorId = Number(data?.authorId);
+
+  if (!subjectId || isNaN(subjectId) || subjectId <= 0) {
+    throw new NotFoundError(`Matéria com ID ${data?.subjectId} não encontrada`);
+  }
+
+  if (!authorId || isNaN(authorId) || authorId <= 0) {
+    throw new NotFoundError(`Autor com ID ${data?.authorId} não encontrado`);
+  }
+
+  const subject = await prisma.subject.findUnique({
+    where: { id: subjectId },
+    select: { id: true },
+  });
+
+  if (!subject) {
+    throw new NotFoundError(`Matéria com ID ${subjectId} não encontrada`);
+  }
+
+  const author = await prisma.user.findUnique({
+    where: { id: authorId },
+    select: { id: true },
+  });
+
+  if (!author) {
+    throw new NotFoundError(`Autor com ID ${authorId} não encontrado`);
+  }
+
+  return prisma.question.create({
     data: {
-      enunciado,
-      respostaCorreta: respostaCorreta ?? null,
-      dificuldade,
+      enunciado: data.enunciado,
+      dificuldade: Number(data.dificuldade),
+      respostaCorreta: data.respostaCorreta ?? null,
+      ativa: data.ativa ?? true,
       subjectId,
       authorId,
     },
-    include: includeRelations,
+    select: publicQuestionSelect,
   });
-};
+}
 
-export const getQuestionsService = async () => {
-  return await prisma.question.findMany({
-    include: includeRelations,
-  });
-};
-
-export const getQuestionByIdService = async id => {
-  return await prisma.question.findUnique({
-    where: { id: Number(id) },
-    include: includeRelations,
-  });
-};
-
-export const updateQuestionService = async (id, data) => {
-  const numericId = Number(id);
-
-  const existingQuestion = await prisma.question.findUnique({
-    where: { id: numericId },
-  });
-  if (!existingQuestion) {
-    const error = new Error('Questão não encontrada.');
-    error.statusCode = 404;
-    throw error;
+export async function updateQuestion(questionId, data) {
+  const id = Number(questionId);
+  if (!id || isNaN(id) || id <= 0) {
+    throw new NotFoundError(`Questão com ID ${questionId} não encontrada`);
   }
 
-  if (data.subjectId !== undefined) {
+  const question = await prisma.question.findUnique({
+    where: { id },
+  });
+
+  if (!question) {
+    throw new NotFoundError(`Questão com ID ${questionId} não encontrada`);
+  }
+
+  if (data?.subjectId !== undefined) {
+    const subjectId = Number(data.subjectId);
+    if (!subjectId || isNaN(subjectId) || subjectId <= 0) {
+      throw new NotFoundError(`Matéria com ID ${data.subjectId} não encontrada`);
+    }
+
     const subject = await prisma.subject.findUnique({
-      where: { id: Number(data.subjectId) },
+      where: { id: subjectId },
+      select: { id: true },
     });
+
     if (!subject) {
-      const error = new Error('Matéria não encontrada.');
-      error.statusCode = 404;
-      throw error;
+      throw new NotFoundError(`Matéria com ID ${data.subjectId} não encontrada`);
     }
   }
 
-  if (data.authorId !== undefined) {
+  if (data?.authorId !== undefined) {
+    const authorId = Number(data.authorId);
+    if (!authorId || isNaN(authorId) || authorId <= 0) {
+      throw new NotFoundError(`Autor com ID ${data.authorId} não encontrado`);
+    }
+
     const author = await prisma.user.findUnique({
-      where: { id: Number(data.authorId) },
+      where: { id: authorId },
+      select: { id: true },
     });
+
     if (!author) {
-      const error = new Error('Autor não encontrado.');
-      error.statusCode = 404;
-      throw error;
+      throw new NotFoundError(`Autor com ID ${data.authorId} não encontrado`);
     }
   }
 
-  return await prisma.question.update({
-    where: { id: numericId },
-    data,
-    include: includeRelations,
+  return prisma.question.update({
+    where: { id },
+    data: {
+      ...(data.enunciado !== undefined && { enunciado: data.enunciado }),
+      ...(data.dificuldade !== undefined && { dificuldade: Number(data.dificuldade) }),
+      ...(data.respostaCorreta !== undefined && { respostaCorreta: data.respostaCorreta }),
+      ...(data.ativa !== undefined && { ativa: data.ativa }),
+      ...(data.subjectId !== undefined && { subjectId: Number(data.subjectId) }),
+      ...(data.authorId !== undefined && { authorId: Number(data.authorId) }),
+    },
+    select: publicQuestionSelect,
   });
-};
+}
 
-export const deleteQuestionService = async id => {
-  const numericId = Number(id);
-
-  const existingQuestion = await prisma.question.findUnique({
-    where: { id: numericId },
-  });
-  if (!existingQuestion) {
-    const error = new Error('Questão não encontrada.');
-    error.statusCode = 404;
-    throw error;
+export async function deleteQuestion(questionId) {
+  const id = Number(questionId);
+  if (!id || isNaN(id) || id <= 0) {
+    throw new NotFoundError(`Questão com ID ${questionId} não encontrada`);
   }
 
-  return await prisma.question.delete({
-    where: { id: numericId },
-    include: includeRelations,
+  const question = await prisma.question.findUnique({
+    where: { id },
   });
-};
+
+  if (!question) {
+    throw new NotFoundError(`Questão com ID ${questionId} não encontrada`);
+  }
+
+  return prisma.question.delete({
+    where: { id },
+  });
+}

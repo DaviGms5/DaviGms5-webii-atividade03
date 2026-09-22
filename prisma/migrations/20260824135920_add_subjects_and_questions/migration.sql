@@ -1,28 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Question` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Subject` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "Question" DROP CONSTRAINT "Question_author_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Question" DROP CONSTRAINT "Question_subject_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "Subject" DROP CONSTRAINT "Subject_professor_id_fkey";
-
--- DropTable
-DROP TABLE "Question";
-
--- DropTable
-DROP TABLE "Subject";
-
--- DropEnum
-DROP TYPE "Dificuldade";
-
 -- CreateTable
 CREATE TABLE "subjects" (
     "id" SERIAL NOT NULL,

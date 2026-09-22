@@ -10,6 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL") // 
 }
 
 enum Papel {
@@ -25,7 +26,6 @@ model User {
   papel     Papel      @default(PROFESSOR)
   createdAt DateTime   @default(now()) @map("data_criacao")
   updatedAt DateTime   @updatedAt @map("data_atualizacao")
-
   subjects  Subject[]
   questions Question[]
 
@@ -37,11 +37,10 @@ model Subject {
   nome        String
   ativa       Boolean    @default(true)
   professorId Int        @map("professor_id")
-  createdAt   DateTime   @default(now()) @map("data_criacao")
-  updatedAt   DateTime   @updatedAt @map("data_atualizacao")
-
   professor   User       @relation(fields: [professorId], references: [id])
   questions   Question[]
+  createdAt   DateTime   @default(now()) @map("data_criacao")
+  updatedAt   DateTime   @updatedAt @map("data_atualizacao")
 
   @@map("subjects")
 }
@@ -52,13 +51,12 @@ model Question {
   dificuldade     Int
   respostaCorreta String?  @map("resposta_correta")
   subjectId       Int      @map("disciplina_id")
+  subject         Subject  @relation(fields: [subjectId], references: [id])
   authorId        Int      @map("autor_id")
+  author          User     @relation(fields: [authorId], references: [id])
   ativa           Boolean  @default(true)
   createdAt       DateTime @default(now()) @map("data_criacao")
   updatedAt       DateTime @updatedAt @map("data_atualizacao")
-
-  subject         Subject  @relation(fields: [subjectId], references: [id])
-  author          User     @relation(fields: [authorId], references: [id])
 
   @@map("questions")
 }
