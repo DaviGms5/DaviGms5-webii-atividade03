@@ -1,7 +1,11 @@
+// ✅ Um nível para acessar os serviços dentro da V1
+import * as userService from "../services/userService.js";
 import * as subjectService from "../services/subjectService.js";
+import * as questionService from "../services/questionService.js";
 
-/**
- * Cria uma matéria a partir de dados já validados pelo middleware.
+// ✅ Três níveis para arquivos compartilhados fora da api
+import { NotFoundError } from "../../../errors/AppError.js";/**
+ * Cria um usuário a partir de dados já validados pelo middleware.
  * @param {import("express").Request} req - Requisição HTTP.
  * @param {import("express").Response} res - Resposta HTTP.
  * @param {import("express").NextFunction} next - Encaminhador de erros.
@@ -9,10 +13,10 @@ import * as subjectService from "../services/subjectService.js";
  */
 export async function create(req, res, next) {
   try {
-    const data = await subjectService.createSubject(req.body);
+    const data = await userService.createUser(req.body);
     res.status(201).json({
       success: true,
-      message: "Matéria criada com sucesso",
+      message: "Usuário criado com sucesso",
       data,
     });
   } catch (error) {
@@ -21,7 +25,7 @@ export async function create(req, res, next) {
 }
 
 /**
- * Lista todas as matérias públicas.
+ * Lista todos os usuários públicos.
  * @param {import("express").Request} _req - Requisição HTTP não utilizada.
  * @param {import("express").Response} res - Resposta HTTP.
  * @param {import("express").NextFunction} next - Encaminhador de erros.
@@ -29,7 +33,7 @@ export async function create(req, res, next) {
  */
 export async function getAll(_req, res, next) {
   try {
-    const data = await subjectService.getAllSubjects();
+    const data = await userService.getAllUsers();
     res.status(200).json({ success: true, data, total: data.length });
   } catch (error) {
     next(error);
@@ -37,7 +41,7 @@ export async function getAll(_req, res, next) {
 }
 
 /**
- * Busca uma matéria pelo ID já convertido pelo schema.
+ * Busca um usuário pelo ID já convertido pelo schema.
  * @param {import("express").Request} req - Requisição HTTP.
  * @param {import("express").Response} res - Resposta HTTP.
  * @param {import("express").NextFunction} next - Encaminhador de erros.
@@ -45,7 +49,7 @@ export async function getAll(_req, res, next) {
  */
 export async function getById(req, res, next) {
   try {
-    const data = await subjectService.getSubjectById(req.params.id);
+    const data = await userService.getUserById(req.params.id);
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -53,7 +57,7 @@ export async function getById(req, res, next) {
 }
 
 /**
- * Atualiza parcialmente uma matéria com dados validados.
+ * Atualiza parcialmente um usuário com dados validados.
  * @param {import("express").Request} req - Requisição HTTP.
  * @param {import("express").Response} res - Resposta HTTP.
  * @param {import("express").NextFunction} next - Encaminhador de erros.
@@ -61,10 +65,10 @@ export async function getById(req, res, next) {
  */
 export async function update(req, res, next) {
   try {
-    const data = await subjectService.updateSubject(req.params.id, req.body);
+    const data = await userService.updateUser(req.params.id, req.body);
     res.status(200).json({
       success: true,
-      message: "Matéria atualizada com sucesso",
+      message: "Usuário atualizado com sucesso",
       data,
     });
   } catch (error) {
@@ -73,7 +77,7 @@ export async function update(req, res, next) {
 }
 
 /**
- * Remove uma matéria sem questões vinculadas.
+ * Remove um usuário sem relações vinculadas.
  * @param {import("express").Request} req - Requisição HTTP.
  * @param {import("express").Response} res - Resposta HTTP.
  * @param {import("express").NextFunction} next - Encaminhador de erros.
@@ -81,10 +85,10 @@ export async function update(req, res, next) {
  */
 export async function remove(req, res, next) {
   try {
-    const data = await subjectService.deleteSubject(req.params.id);
+    const data = await userService.deleteUser(req.params.id);
     res.status(200).json({
       success: true,
-      message: "Matéria removida com sucesso",
+      message: "Usuário removido com sucesso",
       data,
     });
   } catch (error) {

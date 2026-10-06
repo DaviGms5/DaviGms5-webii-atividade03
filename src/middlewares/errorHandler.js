@@ -12,9 +12,11 @@ import {
  * @returns {void}
  */
 export function notFoundHandler(req, _res, next) {
-  next(
-    new NotFoundError(`Rota ${req.method} ${req.originalUrl} não encontrada`),
+  const error = new NotFoundError(
+    `Rota ${req.method} ${req.originalUrl} não encontrada`,
   );
+  error.hint = "Versões disponíveis: /v1";
+  next(error);
 }
 
 /**
@@ -51,6 +53,7 @@ export default function errorHandler(error, req, res, next) {
         code: error.code,
         message: error.message,
         ...(error.details.length > 0 && { details: error.details }),
+        ...(error.hint && { hint: error.hint }),
       },
       timestamp: new Date().toISOString(),
       path: req.path,
@@ -61,19 +64,6 @@ export default function errorHandler(error, req, res, next) {
     return res.status(409).json({
       success: false,
       error: { code: "CONFLICT", message: "Registro duplicado" },
-      timestamp: new Date().toISOString(),
-      path: req.path,
-    });
-  }
-
-  // Trata erro de Restrição de Chave Estrangeira do Prisma (ex: excluir matéria que possui questões)
-  if (error?.code === "P2003") {
-    return res.status(409).json({
-      success: false,
-      error: {
-        code: "CONFLICT",
-        message: "Não é possível excluir o recurso pois existem dependências vinculadas.",
-      },
       timestamp: new Date().toISOString(),
       path: req.path,
     });
