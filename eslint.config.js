@@ -1,58 +1,46 @@
-import js from '@eslint/js';
-import globals from 'globals';
+import js from "@eslint/js";
+import globals from "globals";
+import json from "@eslint/json";
+import markdown from "@eslint/markdown";
+import { defineConfig } from "eslint/config";
 
-export default [
-  // 1. OBJETO DE IGNORES GLOBAIS (Primeira posição obrigatória no ESLint 9)
+export default defineConfig([
   {
     ignores: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/coverage/**',
-      '**/.agents/**',
-      '**/*.json',
-      '**/*.md',
-      '**/*.css',
-      'test-eslint.js',
+      "**/generated/**",
+      "**/coverage/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/node_modules/**",
+      "**/aulas/**",
+      "**/.agents/**",
+      "**/.codex/**",
+      "**/.vscode/**",
+      "**/package-lock.json",
     ],
   },
-
-  // 2. Regras recomendadas para código JavaScript
-  js.configs.recommended,
-
-  // 3. Aplicação do ambiente Node para o código da API (src)
   {
-    files: ['src/**/*.js', '*.js'],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-      },
-    },
-    rules: {
-      'no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
-    },
+    files: ["**/*.{js,mjs,cjs}"],
+    plugins: { js },
+    extends: ["js/recommended"],
+    languageOptions: { globals: globals.node },
   },
-
-  // 4. Aplicação do ambiente Jest para os testes (tests)
   {
-    files: ['tests/**/*.js', '**/*.test.js', '**/*.spec.js'],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-      },
-    },
-    rules: {
-      'no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
-    },
+    files: ["**/*.json"],
+    plugins: { json },
+    language: "json/json",
+    extends: ["json/recommended"],
   },
-];
+  {
+    files: ["**/*.jsonc"],
+    plugins: { json },
+    language: "json/jsonc",
+    extends: ["json/recommended"],
+  },
+  {
+    files: ["**/*.md"],
+    plugins: { markdown },
+    language: "markdown/gfm",
+    extends: ["markdown/recommended"],
+  },
+]);
