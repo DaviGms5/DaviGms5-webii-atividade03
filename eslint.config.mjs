@@ -7,16 +7,12 @@ import { defineConfig } from "eslint/config";
 export default defineConfig([
   {
     ignores: [
-      "**/generated/**",
-      "**/coverage/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/node_modules/**",
-      "**/aulas/**",
-      "**/.agents/**",
-      "**/.codex/**",
-      "**/.vscode/**",
-      "**/package-lock.json",
+      "aulas/**",
+      ".agents/**",
+      ".codex/**",
+      "generated/**",
+      "coverage/**",
+      "package-lock.json",
     ],
   },
   {

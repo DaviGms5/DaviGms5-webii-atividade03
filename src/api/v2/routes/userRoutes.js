@@ -1,5 +1,6 @@
 // ADICIONADO: rotas relativas V2 com schemas próprios e middleware compartilhado.
 import express from "express";
+import uploadPhoto from "../../../config/multer.js";
 import * as userController from "../controllers/userController.js";
 import validate from "../../../middlewares/validate.js";
 import {
@@ -10,13 +11,26 @@ import {
 
 const router = express.Router();
 
-router.post("/", validate(createUserV2Schema), userController.create);
+router.post(
+  "/",
+  uploadPhoto,
+  validate(createUserV2Schema),
+  userController.create,
+);
 router.get("/", userController.getAll);
 router.get("/:id", validate(idParamSchema, "params"), userController.getById);
 router.patch(
   "/:id",
   validate(idParamSchema, "params"),
-  validate(updateUserV2Schema),
+  uploadPhoto,
+  (req, res, next) => {
+    // Um arquivo válido, sozinho, também constitui uma atualização PATCH.
+    if (req.file && Object.keys(req.body ?? {}).length === 0) {
+      req.body = {};
+      return next();
+    }
+    return validate(updateUserV2Schema)(req, res, next);
+  },
   userController.update,
 );
 router.delete("/:id", validate(idParamSchema, "params"), userController.remove);
