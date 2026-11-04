@@ -13,9 +13,9 @@
 
 ## Resultados informados no terminal
 
-| Comando                  | Resultado informado                        |
-| ------------------------ | ------------------------------------------ |
-| `npm run test:pratica`   | 3 testes aprovados; 2 ignorados por filtro |
+| Comando | Resultado informado |
+|---|---|
+| `npm run test:pratica` | 3 testes aprovados; 2 ignorados por filtro |
 | `npm run test:atividade` | 2 testes aprovados; 3 ignorados por filtro |
 
 ## Verificações ainda necessárias antes da entrega
