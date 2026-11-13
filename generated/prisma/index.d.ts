@@ -3,7 +3,7 @@
  * Client
 **/
 
-import * as runtime from './runtime/library.js';
+import * as runtime from './runtime/client.js';
 import $Types = runtime.Types // general types
 import $Public = runtime.Types.Public
 import $Utils = runtime.Types.Utils
@@ -64,13 +64,15 @@ export const TipoUsuario: typeof $Enums.TipoUsuario
  * Type-safe database client for TypeScript & Node.js
  * @example
  * ```
- * const prisma = new PrismaClient()
+ * const prisma = new PrismaClient({
+ *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+ * })
  * // Fetch zero or more Users
  * const users = await prisma.user.findMany()
  * ```
  *
  *
- * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+ * Read more in our [docs](https://pris.ly/d/client).
  */
 export class PrismaClient<
   ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
@@ -85,16 +87,18 @@ export class PrismaClient<
    * Type-safe database client for TypeScript & Node.js
    * @example
    * ```
-   * const prisma = new PrismaClient()
+   * const prisma = new PrismaClient({
+   *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+   * })
    * // Fetch zero or more Users
    * const users = await prisma.user.findMany()
    * ```
    *
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+   * Read more in our [docs](https://pris.ly/d/client).
    */
 
-  constructor(optionsArg ?: Prisma.Subset<ClientOptions, Prisma.PrismaClientOptions>);
+  constructor(optionsArg ?: Prisma.PrismaClientConstructorArgs<ClientOptions>);
   $on<V extends U>(eventType: V, callback: (event: V extends 'query' ? Prisma.QueryEvent : Prisma.LogEvent) => void): PrismaClient;
 
   /**
@@ -114,7 +118,7 @@ export class PrismaClient<
    * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -126,7 +130,7 @@ export class PrismaClient<
    * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -137,7 +141,7 @@ export class PrismaClient<
    * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -149,7 +153,7 @@ export class PrismaClient<
    * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -165,12 +169,11 @@ export class PrismaClient<
    * ])
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
+   * Read more in our [docs](https://www.prisma.io/docs/orm/prisma-client/queries/transactions).
    */
-  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
 
   $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<R>
-
 
   $extends: $Extensions.ExtendsHook<"extends", Prisma.TypeMapCb<ClientOptions>, ExtArgs, $Utils.Call<Prisma.TypeMapCb<ClientOptions>, {
     extArgs: ExtArgs
@@ -245,14 +248,6 @@ export namespace Prisma {
   export type DecimalJsLike = runtime.DecimalJsLike
 
   /**
-   * Metrics
-   */
-  export type Metrics = runtime.Metrics
-  export type Metric<T> = runtime.Metric<T>
-  export type MetricHistogram = runtime.MetricHistogram
-  export type MetricHistogramBucket = runtime.MetricHistogramBucket
-
-  /**
   * Extensions
   */
   export import Extension = $Extensions.UserArgs
@@ -263,11 +258,12 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.19.3
-   * Query Engine version: c2990dca591cba766e3b7ef5d9e8a84796e47ab7
+   * Prisma Client JS version: 7.9.1
+   * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
    */
   export type PrismaVersion = {
     client: string
+    engine: string
   }
 
   export const prismaVersion: PrismaVersion
@@ -398,6 +394,19 @@ export namespace Prisma {
   };
 
   /**
+   * Resolved type of the argument passed to the `PrismaClient` constructor.
+   *
+   * When called without a narrower options type (the common case), this resolves
+   * to `PrismaClientOptions` directly, which produces a clear TypeScript error
+   * message (`not assignable to parameter of type 'PrismaClientOptions'`) when
+   * the argument is missing or incomplete. When the user supplies a narrower
+   * options type (e.g. via a literal), it falls back to `Subset` to keep
+   * filtering out unknown properties.
+   */
+  export type PrismaClientConstructorArgs<Options extends PrismaClientOptions> =
+    [PrismaClientOptions] extends [Options] ? PrismaClientOptions : Subset<Options, PrismaClientOptions>;
+
+  /**
    * SelectSubset
    * @desc From `T` pick properties that exist in `U`. Simple version of Intersection.
    * Additionally, it validates, if both select and include are present. If the case, it errors.
@@ -429,7 +438,7 @@ export namespace Prisma {
   type XOR<T, U> =
     T extends object ?
     U extends object ?
-      (Without<T, U> & U) | (Without<U, T> & T)
+      ((Without<T, U> & U) | (Without<U, T> & T)) & object
     : U : T
 
 
@@ -654,9 +663,6 @@ export namespace Prisma {
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
 
 
-  export type Datasources = {
-    db?: Datasource
-  }
 
   interface TypeMapCb<ClientOptions = {}> extends $Utils.Fn<{extArgs: $Extensions.InternalArgs }, $Utils.Record<string, any>> {
     returns: Prisma.TypeMap<this['params']['extArgs'], ClientOptions extends { omit: infer OmitOptions } ? OmitOptions : {}>
@@ -922,14 +928,6 @@ export namespace Prisma {
   export type ErrorFormat = 'pretty' | 'colorless' | 'minimal'
   export interface PrismaClientOptions {
     /**
-     * Overwrites the datasource url from your schema.prisma file
-     */
-    datasources?: Datasources
-    /**
-     * Overwrites the datasource url from your schema.prisma file
-     */
-    datasourceUrl?: string
-    /**
      * @default "colorless"
      */
     errorFormat?: ErrorFormat
@@ -955,7 +953,7 @@ export namespace Prisma {
      *  { emit: 'stdout', level: 'error' }
      * 
      * ```
-     * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
+     * Read more in our [docs](https://pris.ly/d/logging).
      */
     log?: (LogLevel | LogDefinition)[]
     /**
@@ -969,9 +967,28 @@ export namespace Prisma {
       isolationLevel?: Prisma.TransactionIsolationLevel
     }
     /**
-     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
+     * A driver adapter that PrismaClient uses to connect to your database, such as the ones provided by `@prisma/adapter-pg`, `@prisma/adapter-libsql`, `@prisma/adapter-planetscale`, etc.
+     * 
+     * A driver adapter is **required** unless you connect to your database through Prisma Accelerate (in which case use `accelerateUrl` instead).
+     * 
+     * Learn more: https://pris.ly/d/driver-adapters
+     * 
+     * @example
+     * ```ts
+     * import { PrismaPg } from '@prisma/adapter-pg'
+     * import { PrismaClient } from './generated/prisma/client'
+     * 
+     * const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+     * const prisma = new PrismaClient({ adapter })
+     * ```
      */
-    adapter?: runtime.SqlDriverAdapterFactory | null
+    adapter?: runtime.SqlDriverAdapterFactory
+    /**
+     * The Prisma Accelerate connection URL. Use this option to connect to your database through Prisma Accelerate instead of using a driver adapter to connect directly.
+     * 
+     * Learn more: https://pris.ly/d/accelerate
+     */
+    accelerateUrl?: string
     /**
      * Global configuration for omitting model fields by default.
      * 
@@ -987,6 +1004,22 @@ export namespace Prisma {
      * ```
      */
     omit?: Prisma.GlobalOmitConfig
+    /**
+     * SQL commenter plugins that add metadata to SQL queries as comments.
+     * Comments follow the sqlcommenter format: https://google.github.io/sqlcommenter/
+     * 
+     * @example
+     * ```
+     * const prisma = new PrismaClient({
+     *   adapter,
+     *   comments: [
+     *     traceContext(),
+     *     queryInsights(),
+     *   ],
+     * })
+     * ```
+     */
+    comments?: runtime.SqlCommenterPlugin[]
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
@@ -1166,6 +1199,7 @@ export namespace Prisma {
     id: number | null
     nome: string | null
     email: string | null
+    senha: string | null
     foto: string | null
     papel: $Enums.Papel | null
     primeiroNome: string | null
@@ -1180,6 +1214,7 @@ export namespace Prisma {
     id: number | null
     nome: string | null
     email: string | null
+    senha: string | null
     foto: string | null
     papel: $Enums.Papel | null
     primeiroNome: string | null
@@ -1194,6 +1229,7 @@ export namespace Prisma {
     id: number
     nome: number
     email: number
+    senha: number
     foto: number
     papel: number
     primeiroNome: number
@@ -1218,6 +1254,7 @@ export namespace Prisma {
     id?: true
     nome?: true
     email?: true
+    senha?: true
     foto?: true
     papel?: true
     primeiroNome?: true
@@ -1232,6 +1269,7 @@ export namespace Prisma {
     id?: true
     nome?: true
     email?: true
+    senha?: true
     foto?: true
     papel?: true
     primeiroNome?: true
@@ -1246,6 +1284,7 @@ export namespace Prisma {
     id?: true
     nome?: true
     email?: true
+    senha?: true
     foto?: true
     papel?: true
     primeiroNome?: true
@@ -1347,6 +1386,7 @@ export namespace Prisma {
     id: number
     nome: string
     email: string
+    senha: string | null
     foto: string | null
     papel: $Enums.Papel
     primeiroNome: string | null
@@ -1380,6 +1420,7 @@ export namespace Prisma {
     id?: boolean
     nome?: boolean
     email?: boolean
+    senha?: boolean
     foto?: boolean
     papel?: boolean
     primeiroNome?: boolean
@@ -1397,6 +1438,7 @@ export namespace Prisma {
     id?: boolean
     nome?: boolean
     email?: boolean
+    senha?: boolean
     foto?: boolean
     papel?: boolean
     primeiroNome?: boolean
@@ -1411,6 +1453,7 @@ export namespace Prisma {
     id?: boolean
     nome?: boolean
     email?: boolean
+    senha?: boolean
     foto?: boolean
     papel?: boolean
     primeiroNome?: boolean
@@ -1425,6 +1468,7 @@ export namespace Prisma {
     id?: boolean
     nome?: boolean
     email?: boolean
+    senha?: boolean
     foto?: boolean
     papel?: boolean
     primeiroNome?: boolean
@@ -1435,7 +1479,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nome" | "email" | "foto" | "papel" | "primeiroNome" | "sobrenome" | "telefone" | "tipoUsuario" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nome" | "email" | "senha" | "foto" | "papel" | "primeiroNome" | "sobrenome" | "telefone" | "tipoUsuario" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     subjects?: boolean | User$subjectsArgs<ExtArgs>
     questions?: boolean | User$questionsArgs<ExtArgs>
@@ -1454,6 +1498,7 @@ export namespace Prisma {
       id: number
       nome: string
       email: string
+      senha: string | null
       foto: string | null
       papel: $Enums.Papel
       primeiroNome: string | null
@@ -1890,6 +1935,7 @@ export namespace Prisma {
     readonly id: FieldRef<"User", 'Int'>
     readonly nome: FieldRef<"User", 'String'>
     readonly email: FieldRef<"User", 'String'>
+    readonly senha: FieldRef<"User", 'String'>
     readonly foto: FieldRef<"User", 'String'>
     readonly papel: FieldRef<"User", 'Papel'>
     readonly primeiroNome: FieldRef<"User", 'String'>
@@ -2094,6 +2140,11 @@ export namespace Prisma {
      * Skip the first `n` Users.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
     distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
@@ -3249,6 +3300,11 @@ export namespace Prisma {
      * Skip the first `n` Subjects.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Subjects.
+     */
     distinct?: SubjectScalarFieldEnum | SubjectScalarFieldEnum[]
   }
 
@@ -4437,6 +4493,11 @@ export namespace Prisma {
      * Skip the first `n` Questions.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Questions.
+     */
     distinct?: QuestionScalarFieldEnum | QuestionScalarFieldEnum[]
   }
 
@@ -4673,6 +4734,7 @@ export namespace Prisma {
     id: 'id',
     nome: 'nome',
     email: 'email',
+    senha: 'senha',
     foto: 'foto',
     papel: 'papel',
     primeiroNome: 'primeiroNome',
@@ -4843,6 +4905,7 @@ export namespace Prisma {
     id?: IntFilter<"User"> | number
     nome?: StringFilter<"User"> | string
     email?: StringFilter<"User"> | string
+    senha?: StringNullableFilter<"User"> | string | null
     foto?: StringNullableFilter<"User"> | string | null
     papel?: EnumPapelFilter<"User"> | $Enums.Papel
     primeiroNome?: StringNullableFilter<"User"> | string | null
@@ -4859,6 +4922,7 @@ export namespace Prisma {
     id?: SortOrder
     nome?: SortOrder
     email?: SortOrder
+    senha?: SortOrderInput | SortOrder
     foto?: SortOrderInput | SortOrder
     papel?: SortOrder
     primeiroNome?: SortOrderInput | SortOrder
@@ -4878,6 +4942,7 @@ export namespace Prisma {
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     nome?: StringFilter<"User"> | string
+    senha?: StringNullableFilter<"User"> | string | null
     foto?: StringNullableFilter<"User"> | string | null
     papel?: EnumPapelFilter<"User"> | $Enums.Papel
     primeiroNome?: StringNullableFilter<"User"> | string | null
@@ -4894,6 +4959,7 @@ export namespace Prisma {
     id?: SortOrder
     nome?: SortOrder
     email?: SortOrder
+    senha?: SortOrderInput | SortOrder
     foto?: SortOrderInput | SortOrder
     papel?: SortOrder
     primeiroNome?: SortOrderInput | SortOrder
@@ -4916,6 +4982,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"User"> | number
     nome?: StringWithAggregatesFilter<"User"> | string
     email?: StringWithAggregatesFilter<"User"> | string
+    senha?: StringNullableWithAggregatesFilter<"User"> | string | null
     foto?: StringNullableWithAggregatesFilter<"User"> | string | null
     papel?: EnumPapelWithAggregatesFilter<"User"> | $Enums.Papel
     primeiroNome?: StringNullableWithAggregatesFilter<"User"> | string | null
@@ -5074,6 +5141,7 @@ export namespace Prisma {
   export type UserCreateInput = {
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -5090,6 +5158,7 @@ export namespace Prisma {
     id?: number
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -5105,6 +5174,7 @@ export namespace Prisma {
   export type UserUpdateInput = {
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5121,6 +5191,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5137,6 +5208,7 @@ export namespace Prisma {
     id?: number
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -5150,6 +5222,7 @@ export namespace Prisma {
   export type UserUpdateManyMutationInput = {
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5164,6 +5237,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -5411,6 +5485,7 @@ export namespace Prisma {
     id?: SortOrder
     nome?: SortOrder
     email?: SortOrder
+    senha?: SortOrder
     foto?: SortOrder
     papel?: SortOrder
     primeiroNome?: SortOrder
@@ -5429,6 +5504,7 @@ export namespace Prisma {
     id?: SortOrder
     nome?: SortOrder
     email?: SortOrder
+    senha?: SortOrder
     foto?: SortOrder
     papel?: SortOrder
     primeiroNome?: SortOrder
@@ -5443,6 +5519,7 @@ export namespace Prisma {
     id?: SortOrder
     nome?: SortOrder
     email?: SortOrder
+    senha?: SortOrder
     foto?: SortOrder
     papel?: SortOrder
     primeiroNome?: SortOrder
@@ -6156,6 +6233,7 @@ export namespace Prisma {
   export type UserCreateWithoutSubjectsInput = {
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -6171,6 +6249,7 @@ export namespace Prisma {
     id?: number
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -6232,6 +6311,7 @@ export namespace Prisma {
   export type UserUpdateWithoutSubjectsInput = {
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6247,6 +6327,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6299,6 +6380,7 @@ export namespace Prisma {
   export type UserCreateWithoutQuestionsInput = {
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -6314,6 +6396,7 @@ export namespace Prisma {
     id?: number
     nome: string
     email: string
+    senha?: string | null
     foto?: string | null
     papel?: $Enums.Papel
     primeiroNome?: string | null
@@ -6372,6 +6455,7 @@ export namespace Prisma {
   export type UserUpdateWithoutQuestionsInput = {
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null
@@ -6387,6 +6471,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     nome?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    senha?: NullableStringFieldUpdateOperationsInput | string | null
     foto?: NullableStringFieldUpdateOperationsInput | string | null
     papel?: EnumPapelFieldUpdateOperationsInput | $Enums.Papel
     primeiroNome?: NullableStringFieldUpdateOperationsInput | string | null

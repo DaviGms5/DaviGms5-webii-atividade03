@@ -7,7 +7,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const server = app.listen(PORT, () => {
   console.log("Servidor rodando na porta " + PORT);
   console.log("Health check: http://localhost:" + PORT + "/health");
-  console.log("Documentação: http://localhost:" + PORT + "/api-docs");
+  // ADICIONADO: endereço da documentação interativa e da V2.
+  console.log("Documentação Swagger: http://localhost:" + PORT + "/api-docs");
   console.log("API v1: http://localhost:" + PORT + "/v1");
   console.log("API v2: http://localhost:" + PORT + "/v2");
   console.log("Usuários v1: http://localhost:" + PORT + "/v1/users");

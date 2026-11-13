@@ -19,7 +19,10 @@ const {
   skip,
   Decimal,
   Debug,
-  objectEnumValues,
+  DbNull,
+  JsonNull,
+  AnyNull,
+  NullTypes,
   makeStrictEnum,
   Extensions,
   warnOnce,
@@ -27,7 +30,7 @@ const {
   Public,
   getRuntime,
   createParam,
-} = require('./runtime/library.js')
+} = require('./runtime/client.js')
 
 
 const Prisma = {}
@@ -36,12 +39,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.19.3
- * Query Engine version: c2990dca591cba766e3b7ef5d9e8a84796e47ab7
+ * Prisma Client JS version: 7.9.1
+ * Query Engine version: e922089b7d7502aff4249d5da3420f6fa55fc6ad
  */
 Prisma.prismaVersion = {
-  client: "6.19.3",
-  engine: "c2990dca591cba766e3b7ef5d9e8a84796e47ab7"
+  client: "7.9.1",
+  engine: "e922089b7d7502aff4249d5da3420f6fa55fc6ad"
 }
 
 Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
@@ -69,15 +72,11 @@ Prisma.defineExtension = Extensions.defineExtension
 /**
  * Shorthand utilities for JSON filtering
  */
-Prisma.DbNull = objectEnumValues.instances.DbNull
-Prisma.JsonNull = objectEnumValues.instances.JsonNull
-Prisma.AnyNull = objectEnumValues.instances.AnyNull
+Prisma.DbNull = DbNull
+Prisma.JsonNull = JsonNull
+Prisma.AnyNull = AnyNull
 
-Prisma.NullTypes = {
-  DbNull: objectEnumValues.classes.DbNull,
-  JsonNull: objectEnumValues.classes.JsonNull,
-  AnyNull: objectEnumValues.classes.AnyNull
-}
+Prisma.NullTypes = NullTypes
 
 
 
@@ -98,6 +97,7 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   nome: 'nome',
   email: 'email',
+  senha: 'senha',
   foto: 'foto',
   papel: 'papel',
   primeiroNome: 'primeiroNome',
@@ -162,92 +162,31 @@ exports.Prisma.ModelName = {
  * Create the Client
  */
 const config = {
-  "generator": {
-    "name": "client",
-    "provider": {
-      "fromEnvVar": null,
-      "value": "prisma-client-js"
-    },
-    "output": {
-      "value": "/workspaces/DaviGms5-webii-atividade03/generated/prisma",
-      "fromEnvVar": null
-    },
-    "config": {
-      "engineType": "library"
-    },
-    "binaryTargets": [
-      {
-        "fromEnvVar": null,
-        "value": "debian-openssl-1.1.x",
-        "native": true
-      }
-    ],
-    "previewFeatures": [],
-    "sourceFilePath": "/workspaces/DaviGms5-webii-atividade03/prisma/schema.prisma",
-    "isCustomOutput": true
-  },
-  "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../.env"
-  },
-  "relativePath": "../../prisma",
-  "clientVersion": "6.19.3",
-  "engineVersion": "c2990dca591cba766e3b7ef5d9e8a84796e47ab7",
-  "datasourceNames": [
-    "db"
-  ],
+  "previewFeatures": [],
+  "clientVersion": "7.9.1",
+  "engineVersion": "e922089b7d7502aff4249d5da3420f6fa55fc6ad",
   "activeProvider": "postgresql",
-  "postinstall": false,
-  "inlineDatasources": {
-    "db": {
-      "url": {
-        "fromEnvVar": "DATABASE_URL",
-        "value": null
-      }
-    }
-  },
-  "inlineSchema": "// prisma/schema.prisma\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum Papel {\n  PROFESSOR\n  ADMIN\n}\n\n/// ADICIONADO: enum da V2; o enum Papel da V1 permanece intacto.\nenum TipoUsuario {\n  professor\n  admin\n}\n\nmodel User {\n  id           Int          @id @default(autoincrement())\n  nome         String\n  email        String       @unique\n  foto         String?\n  papel        Papel        @default(PROFESSOR)\n  // ADICIONADO: campos V2 anuláveis; não remover nome/papel nem preencher legado.\n  primeiroNome String?      @map(\"primeiro_nome\")\n  sobrenome    String?\n  telefone     String?\n  // Sem default no banco: um ADMIN legado não deve virar professor na V2.\n  tipoUsuario  TipoUsuario? @map(\"tipo_usuario\")\n  createdAt    DateTime     @default(now()) @map(\"data_criacao\")\n  updatedAt    DateTime     @updatedAt @map(\"data_atualizacao\")\n  subjects     Subject[]\n  questions    Question[]\n\n  @@map(\"users\")\n}\n\nmodel Subject {\n  id          Int        @id @default(autoincrement())\n  nome        String\n  ativa       Boolean    @default(true)\n  professorId Int        @map(\"professor_id\")\n  professor   User       @relation(fields: [professorId], references: [id])\n  questions   Question[]\n  createdAt   DateTime   @default(now()) @map(\"data_criacao\")\n  updatedAt   DateTime   @updatedAt @map(\"data_atualizacao\")\n\n  @@map(\"subjects\")\n}\n\nmodel Question {\n  id              Int      @id @default(autoincrement())\n  enunciado       String\n  dificuldade     Int\n  respostaCorreta String?  @map(\"resposta_correta\")\n  subjectId       Int      @map(\"disciplina_id\")\n  subject         Subject  @relation(fields: [subjectId], references: [id])\n  authorId        Int      @map(\"autor_id\")\n  author          User     @relation(fields: [authorId], references: [id])\n  ativa           Boolean  @default(true)\n  createdAt       DateTime @default(now()) @map(\"data_criacao\")\n  updatedAt       DateTime @updatedAt @map(\"data_atualizacao\")\n\n  @@map(\"questions\")\n}\n",
-  "inlineSchemaHash": "ae489de27c89007572505e5820d490680f221c631b411996923bc4f9e67cc155",
-  "copyEngine": true
+  "inlineSchema": "// prisma/schema.prisma\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nenum Papel {\n  PROFESSOR\n  ADMIN\n}\n\n/// ADICIONADO: enum da V2; o enum Papel da V1 permanece intacto.\nenum TipoUsuario {\n  professor\n  admin\n}\n\nmodel User {\n  id           Int          @id @default(autoincrement())\n  nome         String\n  email        String       @unique\n  senha        String?\n  foto         String?\n  papel        Papel        @default(PROFESSOR)\n  // ADICIONADO: campos V2 anuláveis; não remover nome/papel nem preencher legado.\n  primeiroNome String?      @map(\"primeiro_nome\")\n  sobrenome    String?\n  telefone     String?\n  // Sem default no banco: um ADMIN legado não deve virar professor na V2.\n  tipoUsuario  TipoUsuario? @map(\"tipo_usuario\")\n  createdAt    DateTime     @default(now()) @map(\"data_criacao\")\n  updatedAt    DateTime     @updatedAt @map(\"data_atualizacao\")\n  subjects     Subject[]\n  questions    Question[]\n\n  @@map(\"users\")\n}\n\nmodel Subject {\n  id          Int        @id @default(autoincrement())\n  nome        String\n  ativa       Boolean    @default(true)\n  professorId Int        @map(\"professor_id\")\n  professor   User       @relation(fields: [professorId], references: [id])\n  questions   Question[]\n  createdAt   DateTime   @default(now()) @map(\"data_criacao\")\n  updatedAt   DateTime   @updatedAt @map(\"data_atualizacao\")\n\n  @@map(\"subjects\")\n}\n\nmodel Question {\n  id              Int      @id @default(autoincrement())\n  enunciado       String\n  dificuldade     Int\n  respostaCorreta String?  @map(\"resposta_correta\")\n  subjectId       Int      @map(\"disciplina_id\")\n  subject         Subject  @relation(fields: [subjectId], references: [id])\n  authorId        Int      @map(\"autor_id\")\n  author          User     @relation(fields: [authorId], references: [id])\n  ativa           Boolean  @default(true)\n  createdAt       DateTime @default(now()) @map(\"data_criacao\")\n  updatedAt       DateTime @updatedAt @map(\"data_atualizacao\")\n\n  @@map(\"questions\")\n}\n"
 }
 
-const fs = require('fs')
-
-config.dirname = __dirname
-if (!fs.existsSync(path.join(__dirname, 'schema.prisma'))) {
-  const alternativePaths = [
-    "generated/prisma",
-    "prisma",
-  ]
-  
-  const alternativePath = alternativePaths.find((altPath) => {
-    return fs.existsSync(path.join(process.cwd(), altPath, 'schema.prisma'))
-  }) ?? alternativePaths[0]
-
-  config.dirname = path.join(process.cwd(), alternativePath)
-  config.isBundled = true
-}
-
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"dbName\":\"users\",\"schema\":null,\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":true,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"Int\",\"nativeType\":null,\"default\":{\"name\":\"autoincrement\",\"args\":[]},\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"nome\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"email\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":true,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"foto\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":false,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"papel\",\"kind\":\"enum\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"Papel\",\"nativeType\":null,\"default\":\"PROFESSOR\",\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"primeiroNome\",\"dbName\":\"primeiro_nome\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":false,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"sobrenome\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":false,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"telefone\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":false,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"tipoUsuario\",\"dbName\":\"tipo_usuario\",\"kind\":\"enum\",\"isList\":false,\"isRequired\":false,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"TipoUsuario\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"createdAt\",\"dbName\":\"data_criacao\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"DateTime\",\"nativeType\":null,\"default\":{\"name\":\"now\",\"args\":[]},\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"updatedAt\",\"dbName\":\"data_atualizacao\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"DateTime\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":true},{\"name\":\"subjects\",\"kind\":\"object\",\"isList\":true,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"Subject\",\"nativeType\":null,\"relationName\":\"SubjectToUser\",\"relationFromFields\":[],\"relationToFields\":[],\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"questions\",\"kind\":\"object\",\"isList\":true,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"Question\",\"nativeType\":null,\"relationName\":\"QuestionToUser\",\"relationFromFields\":[],\"relationToFields\":[],\"isGenerated\":false,\"isUpdatedAt\":false}],\"primaryKey\":null,\"uniqueFields\":[],\"uniqueIndexes\":[],\"isGenerated\":false},\"Subject\":{\"dbName\":\"subjects\",\"schema\":null,\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":true,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"Int\",\"nativeType\":null,\"default\":{\"name\":\"autoincrement\",\"args\":[]},\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"nome\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"ativa\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"Boolean\",\"nativeType\":null,\"default\":true,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"professorId\",\"dbName\":\"professor_id\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":true,\"hasDefaultValue\":false,\"type\":\"Int\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"professor\",\"kind\":\"object\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"User\",\"nativeType\":null,\"relationName\":\"SubjectToUser\",\"relationFromFields\":[\"professorId\"],\"relationToFields\":[\"id\"],\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"questions\",\"kind\":\"object\",\"isList\":true,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"Question\",\"nativeType\":null,\"relationName\":\"QuestionToSubject\",\"relationFromFields\":[],\"relationToFields\":[],\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"createdAt\",\"dbName\":\"data_criacao\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"DateTime\",\"nativeType\":null,\"default\":{\"name\":\"now\",\"args\":[]},\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"updatedAt\",\"dbName\":\"data_atualizacao\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"DateTime\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":true}],\"primaryKey\":null,\"uniqueFields\":[],\"uniqueIndexes\":[],\"isGenerated\":false},\"Question\":{\"dbName\":\"questions\",\"schema\":null,\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":true,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"Int\",\"nativeType\":null,\"default\":{\"name\":\"autoincrement\",\"args\":[]},\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"enunciado\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"dificuldade\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"Int\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"respostaCorreta\",\"dbName\":\"resposta_correta\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":false,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"String\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"subjectId\",\"dbName\":\"disciplina_id\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":true,\"hasDefaultValue\":false,\"type\":\"Int\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"subject\",\"kind\":\"object\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"Subject\",\"nativeType\":null,\"relationName\":\"QuestionToSubject\",\"relationFromFields\":[\"subjectId\"],\"relationToFields\":[\"id\"],\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"authorId\",\"dbName\":\"autor_id\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":true,\"hasDefaultValue\":false,\"type\":\"Int\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"author\",\"kind\":\"object\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"User\",\"nativeType\":null,\"relationName\":\"QuestionToUser\",\"relationFromFields\":[\"authorId\"],\"relationToFields\":[\"id\"],\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"ativa\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"Boolean\",\"nativeType\":null,\"default\":true,\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"createdAt\",\"dbName\":\"data_criacao\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":true,\"type\":\"DateTime\",\"nativeType\":null,\"default\":{\"name\":\"now\",\"args\":[]},\"isGenerated\":false,\"isUpdatedAt\":false},{\"name\":\"updatedAt\",\"dbName\":\"data_atualizacao\",\"kind\":\"scalar\",\"isList\":false,\"isRequired\":true,\"isUnique\":false,\"isId\":false,\"isReadOnly\":false,\"hasDefaultValue\":false,\"type\":\"DateTime\",\"nativeType\":null,\"isGenerated\":false,\"isUpdatedAt\":true}],\"primaryKey\":null,\"uniqueFields\":[],\"uniqueIndexes\":[],\"isGenerated\":false}},\"enums\":{\"Papel\":{\"values\":[{\"name\":\"PROFESSOR\",\"dbName\":null},{\"name\":\"ADMIN\",\"dbName\":null}],\"dbName\":null},\"TipoUsuario\":{\"values\":[{\"name\":\"professor\",\"dbName\":null},{\"name\":\"admin\",\"dbName\":null}],\"dbName\":null,\"documentation\":\"ADICIONADO: enum da V2; o enum Papel da V1 permanece intacto.\"}},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"nome\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"senha\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"foto\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"papel\",\"kind\":\"enum\",\"type\":\"Papel\"},{\"name\":\"primeiroNome\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"primeiro_nome\"},{\"name\":\"sobrenome\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"telefone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tipoUsuario\",\"kind\":\"enum\",\"type\":\"TipoUsuario\",\"dbName\":\"tipo_usuario\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"data_criacao\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"data_atualizacao\"},{\"name\":\"subjects\",\"kind\":\"object\",\"type\":\"Subject\",\"relationName\":\"SubjectToUser\"},{\"name\":\"questions\",\"kind\":\"object\",\"type\":\"Question\",\"relationName\":\"QuestionToUser\"}],\"dbName\":\"users\"},\"Subject\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"nome\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ativa\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"professorId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"professor_id\"},{\"name\":\"professor\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SubjectToUser\"},{\"name\":\"questions\",\"kind\":\"object\",\"type\":\"Question\",\"relationName\":\"QuestionToSubject\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"data_criacao\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"data_atualizacao\"}],\"dbName\":\"subjects\"},\"Question\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"enunciado\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"dificuldade\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"respostaCorreta\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"resposta_correta\"},{\"name\":\"subjectId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"disciplina_id\"},{\"name\":\"subject\",\"kind\":\"object\",\"type\":\"Subject\",\"relationName\":\"QuestionToSubject\"},{\"name\":\"authorId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"autor_id\"},{\"name\":\"author\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"QuestionToUser\"},{\"name\":\"ativa\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"data_criacao\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"data_atualizacao\"}],\"dbName\":\"questions\"}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
-config.engineWasm = undefined
-config.compilerWasm = undefined
+config.parameterizationSchema = {
+  strings: JSON.parse("[\"where\",\"orderBy\",\"cursor\",\"professor\",\"subject\",\"author\",\"questions\",\"_count\",\"subjects\",\"User.findUnique\",\"User.findUniqueOrThrow\",\"User.findFirst\",\"User.findFirstOrThrow\",\"User.findMany\",\"data\",\"User.createOne\",\"User.createMany\",\"User.createManyAndReturn\",\"User.updateOne\",\"User.updateMany\",\"User.updateManyAndReturn\",\"create\",\"update\",\"User.upsertOne\",\"User.deleteOne\",\"User.deleteMany\",\"having\",\"_avg\",\"_sum\",\"_min\",\"_max\",\"User.groupBy\",\"User.aggregate\",\"Subject.findUnique\",\"Subject.findUniqueOrThrow\",\"Subject.findFirst\",\"Subject.findFirstOrThrow\",\"Subject.findMany\",\"Subject.createOne\",\"Subject.createMany\",\"Subject.createManyAndReturn\",\"Subject.updateOne\",\"Subject.updateMany\",\"Subject.updateManyAndReturn\",\"Subject.upsertOne\",\"Subject.deleteOne\",\"Subject.deleteMany\",\"Subject.groupBy\",\"Subject.aggregate\",\"Question.findUnique\",\"Question.findUniqueOrThrow\",\"Question.findFirst\",\"Question.findFirstOrThrow\",\"Question.findMany\",\"Question.createOne\",\"Question.createMany\",\"Question.createManyAndReturn\",\"Question.updateOne\",\"Question.updateMany\",\"Question.updateManyAndReturn\",\"Question.upsertOne\",\"Question.deleteOne\",\"Question.deleteMany\",\"Question.groupBy\",\"Question.aggregate\",\"AND\",\"OR\",\"NOT\",\"id\",\"enunciado\",\"dificuldade\",\"respostaCorreta\",\"subjectId\",\"authorId\",\"ativa\",\"createdAt\",\"updatedAt\",\"equals\",\"in\",\"notIn\",\"lt\",\"lte\",\"gt\",\"gte\",\"not\",\"contains\",\"startsWith\",\"endsWith\",\"nome\",\"professorId\",\"email\",\"senha\",\"foto\",\"Papel\",\"papel\",\"primeiroNome\",\"sobrenome\",\"telefone\",\"TipoUsuario\",\"tipoUsuario\",\"every\",\"some\",\"none\",\"is\",\"isNot\",\"connectOrCreate\",\"upsert\",\"createMany\",\"set\",\"disconnect\",\"delete\",\"connect\",\"updateMany\",\"deleteMany\",\"increment\",\"decrement\",\"multiply\",\"divide\"]"),
+  graph: "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_ACAdAAB-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_AQAgCAAAvgEAIFsAAHoAIFwAAHoAIF8AAHoAIGAAAHoAIGEAAHoAIGMAAHoAIAVEAgAAAAFKIAAAAAFLQAAAAAFMQAAAAAFYAQAAAAEIRAIAAAABRQEAAAABRgIAAAABRwEAAAABSAIAAAABSiAAAAABS0AAAAABTEAAAAABDQYAAL0BACBEAgAAAAFLQAAAAAFMQAAAAAFYAQAAAAFaAQAAAAFbAQAAAAFcAQAAAAFeAAAAXgJfAQAAAAFgAQAAAAFhAQAAAAFjAAAAYwMCAAAAAQAgFQAAxAEAIAhEAgAAAAFFAQAAAAFGAgAAAAFHAQAAAAFJAgAAAAFKIAAAAAFLQAAAAAFMQAAAAAEDAAAAEAAgFQAAxAEAIBYAAMkBACAPAAAAEAAgBgAApgEAIA4AAMkBACBEAgCBAQAhS0AAhAEAIUxAAIQBACFYAQCAAQAhWgEAgAEAIVsBAIIBACFcAQCCAQAhXgAAowFeIl8BAIIBACFgAQCCAQAhYQEAggEAIWMAAKQBYyMNBgAApgEAIEQCAIEBACFLQACEAQAhTEAAhAEAIVgBAIABACFaAQCAAQAhWwEAggEAIVwBAIIBACFeAACjAV4iXwEAggEAIWABAIIBACFhAQCCAQAhYwAApAFjIw0IAAC8AQAgRAIAAAABS0AAAAABTEAAAAABWAEAAAABWgEAAAABWwEAAAABXAEAAAABXgAAAF4CXwEAAAABYAEAAAABYQEAAAABYwAAAGMDAgAAAAEAIBUAAMoBACAHAwAAnAEAIEQCAAAAAUogAAAAAUtAAAAAAUxAAAAAAVgBAAAAAVkCAAAAAQIAAAAFACAVAADMAQAgAwAAABAAIBUAAMoBACAWAADQAQAgDwAAABAAIAgAAKUBACAOAADQAQAgRAIAgQEAIUtAAIQBACFMQACEAQAhWAEAgAEAIVoBAIABACFbAQCCAQAhXAEAggEAIV4AAKMBXiJfAQCCAQAhYAEAggEAIWEBAIIBACFjAACkAWMjDQgAAKUBACBEAgCBAQAhS0AAhAEAIUxAAIQBACFYAQCAAQAhWgEAgAEAIVsBAIIBACFcAQCCAQAhXgAAowFeIl8BAIIBACFgAQCCAQAhYQEAggEAIWMAAKQBYyMDAAAAAwAgFQAAzAEAIBYAANMBACAJAAAAAwAgAwAAjgEAIA4AANMBACBEAgCBAQAhSiAAgwEAIUtAAIQBACFMQACEAQAhWAEAgAEAIVkCAIEBACEHAwAAjgEAIEQCAIEBACFKIACDAQAhS0AAhAEAIUxAAIQBACFYAQCAAQAhWQIAgQEAIQMGDAMHAAUIBgIDAwABBgoDBwAEAgQAAgUAAQEGCwACBg4ACA0AAAAABQcAChsACxwADB0ADR4ADgAAAAAABQcAChsACxwADB0ADR4ADgEDAAEBAwABBQcAExsAFBwAFR0AFh4AFwAAAAAABQcAExsAFBwAFR0AFh4AFwIEAAIFAAECBAACBQABBQcAHBsAHRwAHh0AHx4AIAAAAAAABQcAHBsAHRwAHh0AHx4AIAkCAQoPAQsSAQwTAQ0UAQ8WARAYBhEZBxIbARMdBhQeCBcfARggARkhBh8kCSAlDyEmAiInAiMoAiQpAiUqAiYsAicuBigvECkxAiozBis0ESw1Ai02Ai43Bi86EjA7GDE8AzI9AzM-AzQ_AzVAAzZCAzdEBjhFGTlHAzpJBjtKGjxLAz1MAz5NBj9QG0BRIQ"
+}
+config.compilerWasm = {
+      getRuntime: async () => require('./query_compiler_fast_bg.js'),
+      getQueryCompilerWasmModule: async () => {
+        const { Buffer } = require('node:buffer')
+        const { wasm } = require('./query_compiler_fast_bg.wasm-base64.js')
+        const queryCompilerWasmFileBytes = Buffer.from(wasm, 'base64')
 
-
-const { warnEnvConflicts } = require('./runtime/library.js')
-
-warnEnvConflicts({
-    rootEnvPath: config.relativeEnvPaths.rootEnvPath && path.resolve(config.dirname, config.relativeEnvPaths.rootEnvPath),
-    schemaEnvPath: config.relativeEnvPaths.schemaEnvPath && path.resolve(config.dirname, config.relativeEnvPaths.schemaEnvPath)
-})
+        return new WebAssembly.Module(queryCompilerWasmFileBytes)
+      },
+      importName: './query_compiler_fast_bg.js',
+    }
 
 const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
-
-// file annotations for bundling tools to include these files
-path.join(__dirname, "libquery_engine-debian-openssl-1.1.x.so.node");
-path.join(process.cwd(), "generated/prisma/libquery_engine-debian-openssl-1.1.x.so.node")
-// file annotations for bundling tools to include these files
-path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "generated/prisma/schema.prisma")

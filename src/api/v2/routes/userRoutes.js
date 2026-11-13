@@ -3,6 +3,13 @@ import express from "express";
 import uploadPhoto from "../../../config/multer.js";
 import * as userController from "../controllers/userController.js";
 import validate from "../../../middlewares/validate.js";
+// ADICIONADO (aula 11): autenticação (quem é) e autorização (o que pode fazer).
+import authenticate from "../../../middlewares/auth.js";
+import {
+  isAdmin,
+  isOwnerOrAdmin,
+  restrictFieldsToAdmin,
+} from "../../../middlewares/authorize.js";
 import {
   createUserV2Schema,
   idParamSchema,
@@ -11,6 +18,8 @@ import {
 
 const router = express.Router();
 
+// ADICIONADO: componentes V2 (usuário, envelopes, corpos e erros de upload).
+// MODIFICADO (aula 11): senha opcional em CreateUserV2 e CreateUserV2Multipart.
 /**
  * @swagger
  * components:
@@ -28,6 +37,7 @@ const router = express.Router();
  *         sobrenome:
  *           type: string
  *           nullable: true
+ *           description: Nulo apenas em usuário legado da V1 cadastrado com uma única palavra.
  *           example: Lovelace
  *         email:
  *           type: string
@@ -40,12 +50,12 @@ const router = express.Router();
  *         telefone:
  *           type: string
  *           nullable: true
- *           example: "38999998888"
+ *           example: "11987654321"
  *         foto:
  *           type: string
  *           format: uri
  *           nullable: true
- *           example: https://ucarecdn.com/uuid/foto.jpg
+ *           example: https://ucarecdn.com/0d2e1f5a-0000-4000-8000-000000000000/
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -61,6 +71,7 @@ const router = express.Router();
  *           example: true
  *         message:
  *           type: string
+ *           description: Presente em criação, atualização e remoção.
  *           example: Usuário criado com sucesso
  *         data:
  *           $ref: '#/components/schemas/UserV2'
@@ -103,15 +114,20 @@ const router = express.Router();
  *           default: professor
  *         telefone:
  *           type: string
- *           nullable: true
  *           pattern: '^\d{10,11}$'
- *           description: 10 ou 11 dígitos, sem máscara
- *           example: "38999998888"
+ *           nullable: true
+ *           example: "11987654321"
  *         foto:
  *           type: string
  *           format: uri
  *           nullable: true
- *           description: URL da foto (use multipart para enviar o arquivo)
+ *           description: URL já hospedada. Para enviar um arquivo, use multipart/form-data.
+ *         senha:
+ *           type: string
+ *           format: password
+ *           writeOnly: true
+ *           minLength: 8
+ *           description: Opcional. Senha inicial (8 caracteres a 72 bytes); sem ela, o usuário não consegue fazer login.
  *     CreateUserV2Multipart:
  *       type: object
  *       required: [primeiroNome, sobrenome, email]
@@ -130,14 +146,19 @@ const router = express.Router();
  *         tipoUsuario:
  *           type: string
  *           enum: [professor, admin]
- *           default: professor
  *         telefone:
  *           type: string
  *           pattern: '^\d{10,11}$'
  *         foto:
  *           type: string
  *           format: binary
- *           description: Imagem JPEG, PNG, GIF ou WebP de até 5 MiB
+ *           description: JPEG, PNG, GIF ou WebP de até 5 MiB. Tem prioridade sobre uma URL enviada como texto.
+ *         senha:
+ *           type: string
+ *           format: password
+ *           writeOnly: true
+ *           minLength: 8
+ *           description: Opcional. Senha inicial (8 caracteres a 72 bytes); sem ela, o usuário não consegue fazer login.
  *     UpdateUserV2:
  *       type: object
  *       additionalProperties: false
@@ -159,15 +180,16 @@ const router = express.Router();
  *           enum: [professor, admin]
  *         telefone:
  *           type: string
- *           nullable: true
  *           pattern: '^\d{10,11}$'
+ *           nullable: true
  *         foto:
  *           type: string
  *           format: uri
  *           nullable: true
- *           description: URL da foto; null remove a referência
+ *           description: Omitida preserva a foto; null remove a referência.
  *     UpdateUserV2Multipart:
  *       type: object
+ *       description: Envie pelo menos um campo de texto ou o arquivo foto.
  *       properties:
  *         primeiroNome:
  *           type: string
@@ -189,60 +211,50 @@ const router = express.Router();
  *         foto:
  *           type: string
  *           format: binary
- *           description: >-
- *             Imagem JPEG, PNG, GIF ou WebP de até 5 MiB. Sozinho, o arquivo
- *             já é uma atualização válida.
+ *           description: JPEG, PNG, GIF ou WebP de até 5 MiB.
  *   responses:
  *     PayloadTooLarge:
- *       description: Corpo JSON acima de 100 KB ou foto acima de 5 MiB
+ *       description: Foto acima de 5 MiB ou JSON acima de 100 KB (PAYLOAD_TOO_LARGE)
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
- *           example:
- *             success: false
- *             error:
- *               code: PAYLOAD_TOO_LARGE
- *               message: Foto excede o limite de 5 MiB
- *             timestamp: "2026-11-03T12:00:00.000Z"
- *             path: /
  *     UploadServiceUnavailable:
- *       description: O serviço externo de upload (Uploadcare) falhou
+ *       description: O provedor de upload falhou (UPLOAD_SERVICE_UNAVAILABLE)
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
- *           example:
- *             success: false
- *             error:
- *               code: UPLOAD_SERVICE_UNAVAILABLE
- *               message: Serviço de upload indisponível
- *             timestamp: "2026-11-03T12:00:00.000Z"
- *             path: /
  *     UploadNotConfigured:
- *       description: Upload não configurado no servidor (chave ausente)
+ *       description: Servidor sem UPLOADCARE_PUBLIC_KEY (UPLOAD_NOT_CONFIGURED)
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/ErrorResponse'
- *           example:
- *             success: false
- *             error:
- *               code: UPLOAD_NOT_CONFIGURED
- *               message: Upload não configurado no servidor
- *             timestamp: "2026-11-03T12:00:00.000Z"
- *             path: /
  */
 
+/**
+ * ADICIONADO: arquivo sozinho é uma atualização; campos continuam estritos.
+ * @param {import("express").Request} req - Texto e foto interpretados pelo Multer.
+ * @param {import("express").Response} res - Resposta Express.
+ * @param {import("express").NextFunction} next - Próximo middleware.
+ */
+function validateUpdateWithPhoto(req, res, next) {
+  if (req.file && Object.keys(req.body).length === 0) return next();
+  return validate(updateUserV2Schema)(req, res, next);
+}
+
+// ADICIONADO: POST aceita JSON ou multipart; documenta todos os status observáveis.
+// MODIFICADO (aula 11): descrição, security bearerAuth e respostas 401 e 403.
 /**
  * @swagger
  * /v2/users:
  *   post:
- *     tags: [Usuários V2]
  *     summary: Cria um usuário (V2)
- *     description: >-
- *       Aceita JSON (foto como URL) ou multipart/form-data (foto como
- *       arquivo). Quando há arquivo, ele tem prioridade sobre a URL.
+ *     description: Exclusivo de ADMIN. Aceita JSON sem arquivo ou multipart/form-data com o arquivo opcional foto. O nome completo e o papel da V1 são gravados automaticamente.
+ *     tags: [Usuários V2]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -252,9 +264,6 @@ const router = express.Router();
  *         multipart/form-data:
  *           schema:
  *             $ref: '#/components/schemas/CreateUserV2Multipart'
- *           encoding:
- *             foto:
- *               contentType: image/jpeg, image/png, image/gif, image/webp
  *     responses:
  *       201:
  *         description: Usuário criado
@@ -264,6 +273,10 @@ const router = express.Router();
  *               $ref: '#/components/schemas/UserV2Response'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       409:
  *         $ref: '#/components/responses/Conflict'
  *       413:
@@ -273,23 +286,27 @@ const router = express.Router();
  *       503:
  *         $ref: '#/components/responses/UploadNotConfigured'
  */
+// MODIFICADO (aula 11): somente ADMIN cria usuários; a checagem vem antes do upload.
 router.post(
   "/",
+  authenticate,
+  isAdmin,
   uploadPhoto,
   validate(createUserV2Schema),
   userController.create,
 );
 
+// ADICIONADO: listagem com envelope success/data/total.
 /**
  * @swagger
  * /v2/users:
  *   get:
+ *     summary: Lista usuários (V2)
+ *     description: Inclui usuários criados pela V1, adaptados à representação V2 sem alterar o banco.
  *     tags: [Usuários V2]
- *     summary: Lista os usuários (V2)
- *     description: Do mais recente para o mais antigo.
  *     responses:
  *       200:
- *         description: Lista de usuários
+ *         description: Lista do mais recente para o mais antigo
  *         content:
  *           application/json:
  *             schema:
@@ -297,12 +314,13 @@ router.post(
  */
 router.get("/", userController.getAll);
 
+// ADICIONADO: busca por ID reutiliza o parâmetro UserId e as respostas de erro.
 /**
  * @swagger
  * /v2/users/{id}:
  *   get:
- *     tags: [Usuários V2]
  *     summary: Busca um usuário por ID (V2)
+ *     tags: [Usuários V2]
  *     parameters:
  *       - $ref: '#/components/parameters/UserId'
  *     responses:
@@ -319,15 +337,17 @@ router.get("/", userController.getAll);
  */
 router.get("/:id", validate(idParamSchema, "params"), userController.getById);
 
+// ADICIONADO: PATCH parcial com os mesmos dois formatos de corpo do POST.
+// MODIFICADO (aula 11): descrição, security bearerAuth e respostas 401 e 403.
 /**
  * @swagger
  * /v2/users/{id}:
  *   patch:
- *     tags: [Usuários V2]
  *     summary: Atualiza parcialmente um usuário (V2)
- *     description: >-
- *       Envie ao menos um campo ou um arquivo em foto. Aceita JSON ou
- *       multipart/form-data.
+ *     description: O próprio usuário ou um ADMIN. Somente ADMIN altera tipoUsuario. Campos omitidos são preservados. Em multipart, o arquivo foto sozinho já é uma atualização válida.
+ *     tags: [Usuários V2]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/UserId'
  *     requestBody:
@@ -339,9 +359,6 @@ router.get("/:id", validate(idParamSchema, "params"), userController.getById);
  *         multipart/form-data:
  *           schema:
  *             $ref: '#/components/schemas/UpdateUserV2Multipart'
- *           encoding:
- *             foto:
- *               contentType: image/jpeg, image/png, image/gif, image/webp
  *     responses:
  *       200:
  *         description: Usuário atualizado
@@ -351,6 +368,10 @@ router.get("/:id", validate(idParamSchema, "params"), userController.getById);
  *               $ref: '#/components/schemas/UserV2Response'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       409:
@@ -362,43 +383,57 @@ router.get("/:id", validate(idParamSchema, "params"), userController.getById);
  *       503:
  *         $ref: '#/components/responses/UploadNotConfigured'
  */
+// MODIFICADO (aula 11): exige token; PROFESSOR só altera o próprio cadastro e não muda o papel.
 router.patch(
   "/:id",
+  authenticate,
   validate(idParamSchema, "params"),
+  isOwnerOrAdmin("id"),
+  // MODIFICADO: parser antes da validação do texto, depois do ID válido.
   uploadPhoto,
-  (req, res, next) => {
-    // Um arquivo válido, sozinho, também constitui uma atualização PATCH.
-    if (req.file && Object.keys(req.body ?? {}).length === 0) {
-      req.body = {};
-      return next();
-    }
-    return validate(updateUserV2Schema)(req, res, next);
-  },
+  validateUpdateWithPhoto,
+  restrictFieldsToAdmin(["tipoUsuario"]),
   userController.update,
 );
 
+// ADICIONADO: DELETE com conflito para usuários vinculados.
+// MODIFICADO (aula 11): descrição, security bearerAuth e respostas 401 e 403.
 /**
  * @swagger
  * /v2/users/{id}:
  *   delete:
- *     tags: [Usuários V2]
  *     summary: Remove um usuário sem vínculos (V2)
+ *     description: Exclusivo de ADMIN. Usuários com matérias ou questões vinculadas não podem ser removidos.
+ *     tags: [Usuários V2]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/parameters/UserId'
  *     responses:
  *       200:
- *         description: Usuário removido
+ *         description: Usuário removido; a resposta traz os dados excluídos
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/UserV2Response'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       409:
  *         $ref: '#/components/responses/Conflict'
  */
-router.delete("/:id", validate(idParamSchema, "params"), userController.remove);
+// MODIFICADO (aula 11): somente ADMIN remove usuários.
+router.delete(
+  "/:id",
+  authenticate,
+  isAdmin,
+  validate(idParamSchema, "params"),
+  userController.remove,
+);
 
 export default router;

@@ -1,8 +1,12 @@
 //src/app.js
 import express from "express";
+// ADICIONADO (aula 11): headers de segurança HTTP e política de CORS.
+import helmet from "helmet";
+import corsConfig from "./config/cors.js";
+// ADICIONADO: interface Swagger UI e especificação gerada pelo swagger-jsdoc.
 import swaggerUi from "swagger-ui-express";
-import prisma from "./config/database.js";
 import swaggerSpec from "./config/swagger.js";
+import prisma from "./config/database.js";
 import v1Routes from "./api/v1/routes/index.js";
 // ADICIONADO: importa V2; os arquivos e o roteador da V1 permanecem intactos.
 import v2Routes from "./api/v2/routes/index.js";
@@ -10,11 +14,15 @@ import errorHandler, { notFoundHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
 
+// ADICIONADO (aula 11): antes de tudo, para que toda resposta (inclusive erros) receba os headers.
+app.use(helmet());
+// ADICIONADO (aula 11): responde ao preflight antes das rotas e do parser de JSON.
+app.use(corsConfig);
 app.use(express.json({ limit: "100kb" }));
 
-// Documentação OpenAPI: publicada antes das rotas e dos middlewares de erro.
+// ADICIONADO: o mesmo objeto alimenta o JSON e a interface; nada é duplicado.
 app.get("/api-docs.json", (_req, res) => {
-  res.json(swaggerSpec);
+  res.status(200).json(swaggerSpec);
 });
 app.use(
   "/api-docs",
@@ -25,7 +33,7 @@ app.use(
   }),
 );
 
-// Health check: preserva o contrato de monitoramento 200/503 da Aula 05.
+// ADICIONADO: schema e operação de /health; as respostas 200 e 503 têm o mesmo formato.
 /**
  * @swagger
  * components:
@@ -44,11 +52,10 @@ app.use(
  *         timestamp:
  *           type: string
  *           format: date-time
- *           description: Presente somente quando a API e o banco respondem (200).
- *           example: "2026-11-03T12:00:00.000Z"
+ *           description: Presente somente quando o banco respondeu (200).
  *         version:
  *           type: string
- *           example: 1.0.0
+ *           example: "1.0.0"
  *         availableVersions:
  *           type: array
  *           items:
@@ -56,14 +63,12 @@ app.use(
  *           example: [v1, v2]
  *         services:
  *           type: object
- *           required: [api, database]
  *           properties:
  *             api:
  *               type: string
  *               example: OK
  *             database:
  *               type: object
- *               required: [status]
  *               properties:
  *                 status:
  *                   type: string
@@ -71,31 +76,24 @@ app.use(
  *                   example: OK
  * /health:
  *   get:
+ *     summary: Verifica a saúde da API e do banco
+ *     description: Executa SELECT 1 no banco. Responde 503 quando a API está no ar, mas o banco não respondeu.
  *     tags: [Health]
- *     summary: Verifica a disponibilidade da API e do banco de dados
  *     responses:
  *       200:
- *         description: API e banco de dados disponíveis
+ *         description: API e banco disponíveis
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HealthResponse'
  *       503:
- *         description: Banco de dados indisponível (status DEGRADED)
+ *         description: API em execução com banco indisponível (status DEGRADED)
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HealthResponse'
- *             example:
- *               status: DEGRADED
- *               message: API do Gerador de Provas
- *               version: 1.0.0
- *               availableVersions: [v1, v2]
- *               services:
- *                 api: OK
- *                 database:
- *                   status: ERROR
  */
+/** Health check: preserva o contrato de monitoramento 200/503 da Aula 05. */
 app.get("/health", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;

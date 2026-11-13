@@ -1,214 +1,292 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
+import { randomUUID } from "node:crypto";
 import app from "../src/app.js";
+import prisma from "../src/config/database.js";
+// ADICIONADO (aula 11): as escritas na V2 passam a exigir token de ADMIN.
+import { createAuthUser, removeAuthUsers } from "./helpers/auth.js";
+
+// ADICIONADO (aula 11): um ADMIN por arquivo, criado direto no banco e removido ao final.
+let adminAuth;
+beforeAll(async () => {
+  ({ auth: adminAuth } = await createAuthUser({ papel: "ADMIN" }));
+});
+afterAll(removeAuthUsers);
+
+// Cada item descreve o que a documentação final precisa conter, nas duas branches.
+const practiceOperations = [
+  { path: "/health", method: "get", tag: "Health", statuses: [200, 503] },
+  { path: "/v2/users", method: "get", tag: "Usuários V2", statuses: [200] },
+  {
+    path: "/v2/users/{id}",
+    method: "get",
+    tag: "Usuários V2",
+    statuses: [200, 400, 404],
+    idParam: true,
+  },
+  {
+    path: "/v2/users",
+    method: "post",
+    tag: "Usuários V2",
+    statuses: [201, 400, 409, 413, 502],
+    json: ["email", "primeiroNome", "sobrenome"],
+    multipart: true,
+  },
+  {
+    path: "/v2/users/{id}",
+    method: "patch",
+    tag: "Usuários V2",
+    statuses: [200, 400, 404, 409, 413, 502],
+    idParam: true,
+    json: [],
+    multipart: true,
+  },
+  {
+    path: "/v2/users/{id}",
+    method: "delete",
+    tag: "Usuários V2",
+    statuses: [200, 400, 404, 409],
+    idParam: true,
+  },
+];
+
+const activityOperations = [
+  { path: "/v1/users", method: "get", tag: "Usuários V1", statuses: [200] },
+  {
+    path: "/v1/users/{id}",
+    method: "get",
+    tag: "Usuários V1",
+    statuses: [200, 400, 404],
+    idParam: true,
+  },
+  {
+    path: "/v1/users",
+    method: "post",
+    tag: "Usuários V1",
+    statuses: [201, 400, 409],
+    json: ["email", "nome"],
+  },
+  {
+    path: "/v1/users/{id}",
+    method: "patch",
+    tag: "Usuários V1",
+    statuses: [200, 400, 404, 409],
+    idParam: true,
+    json: [],
+  },
+  {
+    path: "/v1/users/{id}",
+    method: "delete",
+    tag: "Usuários V1",
+    statuses: [200, 400, 404, 409],
+    idParam: true,
+  },
+];
 
 let spec;
+const ownedIds = [];
 
 beforeAll(async () => {
   const response = await request(app).get("/api-docs.json");
   spec = response.body;
 });
+afterEach(async () => {
+  await prisma.user.deleteMany({ where: { id: { in: ownedIds.splice(0) } } });
+});
 
-describe("Prática — documentação base e V2", () => {
+/**
+ * Segue referências internas ("#/components/...") até o objeto documentado.
+ * @param {object|undefined} node - Objeto que pode conter $ref.
+ * @returns {object|undefined} Objeto apontado, ou undefined se o destino não existir.
+ */
+function resolve(node) {
+  let current = node;
+  while (current?.$ref) {
+    current = current.$ref
+      .slice(2)
+      .split("/")
+      .reduce((value, key) => value?.[key], spec);
+  }
+  return current;
+}
+
+/**
+ * Lista todos os valores $ref encontrados em qualquer nível do documento.
+ * @param {unknown} node - Parte do documento a percorrer.
+ * @param {string[]} [refs=[]] - Acumulador das referências encontradas.
+ * @returns {string[]} Referências encontradas.
+ */
+function collectRefs(node, refs = []) {
+  if (Array.isArray(node)) node.forEach((item) => collectRefs(item, refs));
+  else if (node && typeof node === "object") {
+    if (typeof node.$ref === "string") refs.push(node.$ref);
+    Object.values(node).forEach((value) => collectRefs(value, refs));
+  }
+  return refs;
+}
+
+/**
+ * Confere uma operação documentada contra o contrato esperado.
+ * @param {object} item - Caminho, método, tag, status e corpos esperados.
+ */
+function checkOperation(item) {
+  const operation = spec.paths?.[item.path]?.[item.method];
+  expect(
+    operation,
+    `${item.method.toUpperCase()} ${item.path} documentado`,
+  ).toBeDefined();
+  expect(operation.summary).toEqual(expect.any(String));
+  expect(operation.tags).toContain(item.tag);
+
+  for (const status of item.statuses) {
+    const response = resolve(operation.responses?.[status]);
+    expect(response, `resposta ${status} documentada`).toBeDefined();
+    expect(response.description).toEqual(expect.any(String));
+    // Erros da API usam o envelope único produzido pelo errorHandler.
+    if (status >= 400 && item.path !== "/health") {
+      const schema = resolve(response.content?.["application/json"]?.schema);
+      expect(schema, `resposta ${status} usa ErrorResponse`).toBe(
+        spec.components.schemas.ErrorResponse,
+      );
+    }
+  }
+
+  if (item.idParam) {
+    const id = (operation.parameters ?? [])
+      .map(resolve)
+      .find((parameter) => parameter?.in === "path" && parameter.name === "id");
+    expect(id, "parâmetro de caminho id").toBeDefined();
+    expect(id.required).toBe(true);
+    expect(id.schema).toMatchObject({ type: "integer", minimum: 1 });
+  }
+
+  if (item.json) {
+    expect(operation.requestBody?.required).toBe(true);
+    const schema = resolve(
+      operation.requestBody.content?.["application/json"]?.schema,
+    );
+    expect(schema, "corpo JSON documentado").toBeDefined();
+    expect(schema.additionalProperties).toBe(false);
+    expect([...(schema.required ?? [])].sort()).toEqual(item.json);
+    if (item.json.length === 0) expect(schema.minProperties).toBe(1);
+  }
+
+  if (item.multipart) {
+    const schema = resolve(
+      operation.requestBody?.content?.["multipart/form-data"]?.schema,
+    );
+    expect(schema, "corpo multipart documentado").toBeDefined();
+    expect(resolve(schema.properties?.foto)?.format).toBe("binary");
+  }
+}
+
+/**
+ * Compara a resposta real de um GET por ID com o schema documentado para o 200.
+ * @param {string} path - Caminho documentado, como /v2/users/{id}.
+ * @param {import("supertest").Response} found - Resposta obtida da API.
+ */
+function checkReadResponse(path, found) {
+  const operation = spec.paths?.[path]?.get;
+  expect(operation, `GET ${path} documentado`).toBeDefined();
+  const envelope = resolve(
+    resolve(operation.responses?.[200])?.content?.["application/json"]?.schema,
+  );
+  expect(envelope, "schema da resposta 200").toBeDefined();
+  // A resposta real não pode trazer campos que a documentação não descreve.
+  for (const key of Object.keys(found.body)) {
+    expect(envelope.properties).toHaveProperty(key);
+  }
+  const user = resolve(envelope.properties.data);
+  const actualKeys = Object.keys(found.body.data).sort();
+  expect(Object.keys(user.properties).sort()).toEqual(actualKeys);
+  expect([...(user.required ?? [])].sort()).toEqual(actualKeys);
+}
+
+describe("Prática — documentação OpenAPI publicada", () => {
   it("publica a especificação OpenAPI 3.0.3 em /api-docs.json", async () => {
     const response = await request(app).get("/api-docs.json");
 
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toMatch(/application\/json/);
-    expect(spec.openapi).toBe("3.0.3");
-    expect(spec.info).toMatchObject({
-      title: "API do Gerador de Provas",
-      version: "1.0.0",
-    });
-    expect(spec.servers).toEqual([
-      { url: "/", description: "Mesmo servidor que publica esta documentação" },
-    ]);
-    expect(spec.tags.map((tag) => tag.name)).toEqual([
-      "Health",
-      "Usuários V1",
-      "Usuários V2",
-    ]);
+    expect(response.body.openapi).toBe("3.0.3");
+    expect(response.body.info.title).toBe("API do Gerador de Provas");
+    expect(response.body.servers[0].url).toBe("/");
   });
 
-  it("publica a Swagger UI em /api-docs com o título configurado", async () => {
+  it("serve a interface Swagger UI em /api-docs/", async () => {
     const response = await request(app).get("/api-docs/");
 
     expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toMatch(/text\/html/);
+    expect(response.text).toContain("swagger-ui");
     expect(response.text).toContain("API Gerador de Provas - Documentação");
   });
 
-  it("declara componentes reutilizáveis", () => {
-    expect(spec.components.parameters.UserId.schema).toMatchObject({
-      type: "integer",
-      minimum: 1,
-      maximum: 2147483647,
-    });
-    expect(spec.components.schemas.ErrorResponse.required).toEqual([
-      "success",
-      "error",
-      "timestamp",
-      "path",
-    ]);
-    for (const name of ["BadRequest", "NotFound", "Conflict"]) {
-      expect(
-        spec.components.responses[name].content["application/json"].schema,
-      ).toEqual({ $ref: "#/components/schemas/ErrorResponse" });
+  it("aponta todas as referências internas para componentes existentes", () => {
+    const refs = collectRefs(spec);
+
+    expect(refs.length).toBeGreaterThan(0);
+    for (const ref of refs) {
+      expect(ref.startsWith("#/"), ref).toBe(true);
+      expect(resolve({ $ref: ref }), ref).toBeDefined();
     }
   });
 
-  it("documenta /health com 200 e 503", () => {
-    const operation = spec.paths["/health"].get;
+  it("usa somente tags declaradas e descreve um sucesso em cada operação", () => {
+    const declared = spec.tags.map((tag) => tag.name);
 
-    expect(operation.tags).toEqual(["Health"]);
-    expect(Object.keys(operation.responses).sort()).toEqual(["200", "503"]);
-    expect(spec.components.schemas.HealthResponse.properties).toHaveProperty(
-      "availableVersions",
-    );
-  });
-
-  it("documenta todas as rotas de /v2/users", () => {
-    const collection = spec.paths["/v2/users"];
-    const item = spec.paths["/v2/users/{id}"];
-
-    expect(Object.keys(collection.post.responses).sort()).toEqual(
-      ["201", "400", "409", "413", "502", "503"].sort(),
-    );
-    expect(Object.keys(collection.post.requestBody.content).sort()).toEqual([
-      "application/json",
-      "multipart/form-data",
-    ]);
-    expect(Object.keys(collection.get.responses)).toEqual(["200"]);
-    expect(Object.keys(item.get.responses).sort()).toEqual([
-      "200",
-      "400",
-      "404",
-    ]);
-    expect(Object.keys(item.patch.responses).sort()).toEqual(
-      ["200", "400", "404", "409", "413", "502", "503"].sort(),
-    );
-    expect(Object.keys(item.delete.responses).sort()).toEqual([
-      "200",
-      "400",
-      "404",
-      "409",
-    ]);
-    for (const operation of [
-      collection.post,
-      collection.get,
-      item.get,
-      item.patch,
-      item.delete,
-    ]) {
-      expect(operation.tags).toEqual(["Usuários V2"]);
+    for (const [path, methods] of Object.entries(spec.paths)) {
+      for (const [method, operation] of Object.entries(methods)) {
+        const label = `${method.toUpperCase()} ${path}`;
+        expect(operation.tags?.length, label).toBeGreaterThan(0);
+        operation.tags.forEach((tag) => expect(declared, label).toContain(tag));
+        const statuses = Object.keys(operation.responses ?? {});
+        expect(
+          statuses.some((status) => status.startsWith("2")),
+          label,
+        ).toBe(true);
+      }
     }
   });
 
-  it("usa foto binária nos schemas multipart da V2", () => {
-    const { schemas } = spec.components;
+  it.each(practiceOperations)("documenta $method $path", (item) =>
+    checkOperation(item),
+  );
 
-    expect(schemas.CreateUserV2Multipart.properties.foto.format).toBe("binary");
-    expect(schemas.UpdateUserV2Multipart.properties.foto.format).toBe("binary");
+  it("descreve exatamente os campos devolvidos por GET /v2/users/{id}", async () => {
+    const created = await request(app)
+      .post("/v2/users")
+      .set(adminAuth)
+      .send({
+        primeiroNome: "Grace",
+        sobrenome: "Hopper",
+        email: `${randomUUID()}@example.com`,
+      });
+    expect(created.status).toBe(201);
+    ownedIds.push(created.body.data.id);
+
+    const found = await request(app).get(`/v2/users/${created.body.data.id}`);
+
+    expect(found.status).toBe(200);
+    checkReadResponse("/v2/users/{id}", found);
   });
 });
 
-describe("Atividade — documentação da V1", () => {
-  const collection = () => spec.paths["/v1/users"];
-  const item = () => spec.paths["/v1/users/{id}"];
-  const statuses = (operation) => Object.keys(operation.responses).sort();
+describe("Atividade — documentação dos usuários V1", () => {
+  it.each(activityOperations)("documenta $method $path", (item) =>
+    checkOperation(item),
+  );
 
-  it("documenta as cinco operações com a tag Usuários V1", () => {
-    for (const operation of [
-      collection().post,
-      collection().get,
-      item().get,
-      item().patch,
-      item().delete,
-    ]) {
-      expect(operation.tags).toEqual(["Usuários V1"]);
-    }
-  });
+  it("descreve exatamente os campos devolvidos por GET /v1/users/{id}", async () => {
+    const created = await request(app)
+      .post("/v1/users")
+      .send({ nome: "Grace Hopper", email: `${randomUUID()}@example.com` });
+    expect(created.status).toBe(201);
+    ownedIds.push(created.body.data.id);
 
-  it("GET /v1/users devolve { success, data, total } com 200", () => {
-    const { schemas } = spec.components;
+    const found = await request(app).get(`/v1/users/${created.body.data.id}`);
 
-    expect(statuses(collection().get)).toEqual(["200"]);
-    expect(schemas.UserV1ListResponse.required).toEqual([
-      "success",
-      "data",
-      "total",
-    ]);
-    expect(schemas.UserV1ListResponse.properties.data.items).toEqual({
-      $ref: "#/components/schemas/UserV1",
-    });
-  });
-
-  it("GET /v1/users/{id} usa UserId e documenta 200, 400 e 404", () => {
-    expect(item().get.parameters).toContainEqual({
-      $ref: "#/components/parameters/UserId",
-    });
-    expect(statuses(item().get)).toEqual(["200", "400", "404"]);
-    expect(spec.components.schemas.UserV1Response.required).toEqual([
-      "success",
-      "data",
-    ]);
-  });
-
-  it("POST e PATCH têm corpo JSON obrigatório e estrito", () => {
-    const { schemas } = spec.components;
-
-    expect(collection().post.requestBody.required).toBe(true);
-    expect(item().patch.requestBody.required).toBe(true);
-    expect(statuses(collection().post)).toEqual(["201", "400", "409"]);
-    expect(statuses(item().patch)).toEqual(["200", "400", "404", "409"]);
-    expect(schemas.CreateUserV1.required).toEqual(["nome", "email"]);
-    expect(schemas.CreateUserV1.additionalProperties).toBe(false);
-    expect(schemas.CreateUserV1.properties.nome).toMatchObject({
-      minLength: 3,
-      maxLength: 100,
-    });
-    expect(schemas.CreateUserV1.properties.papel.enum).toEqual([
-      "PROFESSOR",
-      "ADMIN",
-    ]);
-    expect(schemas.CreateUserV1.properties.foto).toMatchObject({
-      format: "uri",
-      nullable: true,
-    });
-    expect(schemas.UpdateUserV1.additionalProperties).toBe(false);
-    expect(schemas.UpdateUserV1.minProperties).toBe(1);
-  });
-
-  it("DELETE documenta 200, 400, 404 e 409", () => {
-    expect(item().delete.parameters).toContainEqual({
-      $ref: "#/components/parameters/UserId",
-    });
-    expect(statuses(item().delete)).toEqual(["200", "400", "404", "409"]);
-  });
-
-  it("o usuário V1 lista exatamente os campos devolvidos e erros usam ErrorResponse", () => {
-    const user = spec.components.schemas.UserV1;
-    const fields = [
-      "id",
-      "nome",
-      "email",
-      "papel",
-      "foto",
-      "createdAt",
-      "updatedAt",
-    ];
-
-    expect(Object.keys(user.properties).sort()).toEqual([...fields].sort());
-    expect([...user.required].sort()).toEqual([...fields].sort());
-    for (const name of ["BadRequest", "NotFound", "Conflict"]) {
-      expect(
-        spec.components.responses[name].content["application/json"].schema,
-      ).toEqual({ $ref: "#/components/schemas/ErrorResponse" });
-    }
-    expect(item().get.responses["404"]).toEqual({
-      $ref: "#/components/responses/NotFound",
-    });
-    expect(collection().post.responses["409"]).toEqual({
-      $ref: "#/components/responses/Conflict",
-    });
+    expect(found.status).toBe(200);
+    checkReadResponse("/v1/users/{id}", found);
   });
 });

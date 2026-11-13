@@ -9,14 +9,13 @@ import {
 
 const router = express.Router();
 
+// ADICIONADO: componentes V1 (usuário, envelopes e corpos de criação e atualização).
 /**
  * @swagger
  * components:
  *   schemas:
  *     UserV1:
  *       type: object
- *       description: >-
- *         Usuário público da V1 (publicUserSelect). Não expõe campos da V2.
  *       required: [id, nome, email, papel, foto, createdAt, updatedAt]
  *       properties:
  *         id:
@@ -46,7 +45,6 @@ const router = express.Router();
  *           format: date-time
  *     UserV1Response:
  *       type: object
- *       description: Envelope de item da V1.
  *       required: [success, data]
  *       properties:
  *         success:
@@ -54,13 +52,12 @@ const router = express.Router();
  *           example: true
  *         message:
  *           type: string
- *           description: Presente em POST, PATCH e DELETE; ausente em GET.
+ *           description: Presente em criação, atualização e remoção.
  *           example: Usuário criado com sucesso
  *         data:
  *           $ref: '#/components/schemas/UserV1'
  *     UserV1ListResponse:
  *       type: object
- *       description: Envelope de lista da V1.
  *       required: [success, data, total]
  *       properties:
  *         success:
@@ -75,7 +72,6 @@ const router = express.Router();
  *           example: 1
  *     CreateUserV1:
  *       type: object
- *       description: Corpo estrito; campos desconhecidos retornam 400.
  *       additionalProperties: false
  *       required: [nome, email]
  *       properties:
@@ -83,12 +79,10 @@ const router = express.Router();
  *           type: string
  *           minLength: 3
  *           maxLength: 100
- *           description: 3 a 100 caracteres, sem espaços nas pontas
  *           example: Ada Lovelace
  *         email:
  *           type: string
  *           format: email
- *           description: Único; normalizado para minúsculas
  *           example: ada@example.com
  *         papel:
  *           type: string
@@ -98,10 +92,8 @@ const router = express.Router();
  *           type: string
  *           format: uri
  *           nullable: true
- *           description: URL da foto ou null
  *     UpdateUserV1:
  *       type: object
- *       description: Corpo estrito com pelo menos um campo.
  *       additionalProperties: false
  *       minProperties: 1
  *       properties:
@@ -119,15 +111,16 @@ const router = express.Router();
  *           type: string
  *           format: uri
  *           nullable: true
- *           description: URL da foto; null remove a referência
+ *           description: Omitida preserva a foto; null remove a referência.
  */
 
+// ADICIONADO: POST aceita somente JSON estrito.
 /**
  * @swagger
  * /v1/users:
  *   post:
- *     tags: [Usuários V1]
  *     summary: Cria um usuário (V1)
+ *     tags: [Usuários V1]
  *     requestBody:
  *       required: true
  *       content:
@@ -148,16 +141,16 @@ const router = express.Router();
  */
 router.post("/", validate(createUserSchema), userController.create);
 
+// ADICIONADO: listagem com envelope success/data/total.
 /**
  * @swagger
  * /v1/users:
  *   get:
+ *     summary: Lista usuários (V1)
  *     tags: [Usuários V1]
- *     summary: Lista os usuários (V1)
- *     description: Do mais recente para o mais antigo.
  *     responses:
  *       200:
- *         description: Lista de usuários
+ *         description: Lista do mais recente para o mais antigo
  *         content:
  *           application/json:
  *             schema:
@@ -165,12 +158,13 @@ router.post("/", validate(createUserSchema), userController.create);
  */
 router.get("/", userController.getAll);
 
+// ADICIONADO: busca por ID reutiliza o parâmetro UserId e as respostas de erro.
 /**
  * @swagger
  * /v1/users/{id}:
  *   get:
- *     tags: [Usuários V1]
  *     summary: Busca um usuário por ID (V1)
+ *     tags: [Usuários V1]
  *     parameters:
  *       - $ref: '#/components/parameters/UserId'
  *     responses:
@@ -187,13 +181,14 @@ router.get("/", userController.getAll);
  */
 router.get("/:id", validate(idParamSchema, "params"), userController.getById);
 
+// ADICIONADO: PATCH parcial com pelo menos um campo.
 /**
  * @swagger
  * /v1/users/{id}:
  *   patch:
- *     tags: [Usuários V1]
  *     summary: Atualiza parcialmente um usuário (V1)
- *     description: Envie ao menos um campo.
+ *     description: Campos omitidos são preservados.
+ *     tags: [Usuários V1]
  *     parameters:
  *       - $ref: '#/components/parameters/UserId'
  *     requestBody:
@@ -223,17 +218,19 @@ router.patch(
   userController.update,
 );
 
+// ADICIONADO: DELETE com conflito para usuários vinculados.
 /**
  * @swagger
  * /v1/users/{id}:
  *   delete:
- *     tags: [Usuários V1]
  *     summary: Remove um usuário sem vínculos (V1)
+ *     description: Usuários com matérias ou questões vinculadas não podem ser removidos.
+ *     tags: [Usuários V1]
  *     parameters:
  *       - $ref: '#/components/parameters/UserId'
  *     responses:
  *       200:
- *         description: Usuário removido
+ *         description: Usuário removido; a resposta traz os dados excluídos
  *         content:
  *           application/json:
  *             schema:

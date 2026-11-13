@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Papel {
@@ -25,6 +24,7 @@ model User {
   id           Int          @id @default(autoincrement())
   nome         String
   email        String       @unique
+  senha        String?
   foto         String?
   papel        Papel        @default(PROFESSOR)
   // ADICIONADO: campos V2 anuláveis; não remover nome/papel nem preencher legado.
