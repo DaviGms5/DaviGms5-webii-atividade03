@@ -1,49 +1,80 @@
 {
-  "name": "gerador-provas-api",
+  "name": "26-webii-api",
   "version": "1.0.0",
-  "description": "API para gerador de provas automáticas",
-  "main": "src/server.js",
+  "description": "",
+  "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node src/server.js",
     "dev": "nodemon --watch src --watch generated/prisma --ext js,ts,json --exec tsx src/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:pratica": "vitest run --exclude tests/deploy.test.js && vitest run tests/deploy.test.js -t Prática",
+    "test:atividade": "vitest run tests/deploy.test.js -t Atividade",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "fixtures:upload": "node tests/fixtures/createUploadFixtures.js",
+    "serve:avaliacao": "tsx tests/serve-evaluation.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "vercel-build": "npm run db:generate && npm run db:migrate"
   },
-  "keywords": [
-    "api",
-    "rest",
-    "education",
-    "provas"
-  ],
-  "author": "Seu Nome",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arthurfporto/26-webii-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": "26.x"
+  },
+  "bugs": {
+    "url": "https://github.com/arthurfporto/26-webii-api/issues"
+  },
+  "homepage": "https://github.com/arthurfporto/26-webii-api#readme",
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@uploadcare/upload-client": "6.23.0",
+    "bcrypt": "6.0.0",
+    "cors": "2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "pg": "^8.23.0"
+    "helmet": "8.3.0",
+    "jsonwebtoken": "9.0.3",
+    "multer": "2.4.0",
+    "pg": "^8.23.0",
+    "swagger-jsdoc": "6.3.0",
+    "swagger-ui-express": "5.0.1",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@eslint/css": "^1.4.0",
     "@eslint/js": "^10.0.1",
     "@eslint/json": "^2.0.1",
     "@eslint/markdown": "^8.0.3",
     "@vitest/coverage-v8": "^5.0.0",
-    "eslint": "^10.9.1",
+    "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
-    "globals": "^17.11.0",
+    "globals": "^17.10.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.9.6",
     "prisma": "^7.9.1",
     "supertest": "^7.2.2",
     "tsx": "^4.23.12",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "yaml": "2.9.1"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.9.1": true,
+    "esbuild@0.28.2": true,
+    "fsevents@2.3.3": true,
+    "prisma@7.9.1": true
   }
 }

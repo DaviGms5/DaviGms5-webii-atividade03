@@ -7,12 +7,12 @@ info:
 
 http:
   method: POST
-  url: '{{baseUrl}}/questions'
+  url: "{{baseUrl}}/v1/questions"
   body:
     type: json
     data: |-
       {
-        "enunciado": "Quanto é 2 + 2? {{runId}}",
+        "enunciado": "  Quanto é 2 + 2? {{runId}}  ",
         "dificuldade": 1,
         "respostaCorreta": "4",
         "subjectId": {{questionSubjectId}},
@@ -28,7 +28,7 @@ runtime:
 
         const authorResponse = await bru.sendRequest({
           method: "POST",
-          url: `${bru.getEnvVar("baseUrl")}/users`,
+          url: `${bru.getEnvVar("baseUrl")}/v1/users`,
           headers: { "Content-Type": "application/json" },
           data: {
             nome: "Autor da questão",
@@ -46,7 +46,7 @@ runtime:
 
         const subjectResponse = await bru.sendRequest({
           method: "POST",
-          url: `${bru.getEnvVar("baseUrl")}/subjects`,
+          url: `${bru.getEnvVar("baseUrl")}/v1/subjects`,
           headers: { "Content-Type": "application/json" },
           data: {
             nome: "Matéria da questão",
@@ -72,6 +72,7 @@ runtime:
           expect(res.body.data).to.have.property("id");
           expect(res.body.data).to.have.property("subject");
           expect(res.body.data).to.have.property("author");
+          expect(res.body.data.enunciado).to.equal(`Quanto é 2 + 2? ${bru.getVar("runId")}`);
         });
 
 settings:

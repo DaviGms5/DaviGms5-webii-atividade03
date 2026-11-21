@@ -1,0 +1,22 @@
+info:
+  name: "Especificação OpenAPI publicada"
+  type: http
+  seq: 4
+  tags: [aula-12-pratica]
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api-docs.json"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("Publica o JSON da documentação", function () {
+          expect(res.status).to.equal(200);
+          expect(res.body.openapi).to.equal("3.0.3");
+          expect(res.body.paths).to.have.property("/health");
+        });
+
+settings:
+  encodeUrl: true

@@ -7,12 +7,12 @@ info:
 
 http:
   method: POST
-  url: '{{baseUrl}}/subjects'
+  url: "{{baseUrl}}/v1/subjects"
   body:
     type: json
     data: |-
       {
-        "nome": "Matéria de teste {{runId}}",
+        "nome": "  Matéria de teste {{runId}}  ",
         "professorId": {{subjectProfessorId}}
       }
 
@@ -25,7 +25,7 @@ runtime:
 
         const response = await bru.sendRequest({
           method: "POST",
-          url: `${bru.getEnvVar("baseUrl")}/users`,
+          url: `${bru.getEnvVar("baseUrl")}/v1/users`,
           headers: { "Content-Type": "application/json" },
           data: {
             nome: "Professor da matéria",
@@ -51,6 +51,7 @@ runtime:
           expect(res.body.success).to.equal(true);
           expect(res.body.data).to.have.property("id");
           expect(res.body.data).to.have.property("professor");
+          expect(res.body.data.nome).to.equal(`Matéria de teste ${bru.getVar("runId")}`);
         });
 
 settings:

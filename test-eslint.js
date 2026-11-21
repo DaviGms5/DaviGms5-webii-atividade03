@@ -1,6 +1,6 @@
 export function malFormatada() {
-  return 'sem formatação';
+  return "sem formatação";
 }
 
-const teste = 'hello world';
+const teste = "hello world";
 console.log(teste);

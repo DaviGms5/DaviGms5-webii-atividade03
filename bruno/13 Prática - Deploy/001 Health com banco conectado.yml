@@ -1,0 +1,27 @@
+info:
+  name: "Health com banco conectado"
+  type: http
+  seq: 1
+  tags: [aula-12-pratica]
+
+http:
+  method: GET
+  url: "{{baseUrl}}/health"
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("API e banco respondem", function () {
+          expect(res.status).to.equal(200);
+          expect(res.body.status).to.equal("OK");
+          expect(res.body.services.database.status).to.equal("OK");
+        });
+
+        test("Mantém os headers de segurança fora do ambiente local", function () {
+          expect(res.headers["x-content-type-options"]).to.equal("nosniff");
+          expect(res.headers).to.not.have.property("x-powered-by");
+        });
+
+settings:
+  encodeUrl: true

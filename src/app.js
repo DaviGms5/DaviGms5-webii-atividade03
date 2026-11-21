@@ -1,69 +1,137 @@
-// src/app.js
-import express from 'express';
-import prisma from './config/database.js';
-import userRoutes from './routes/userRoutes.js';
-import subjectRoutes from './routes/subjectRoutes.js';
-import questionRoutes from './routes/questionRoutes.js';
+//src/app.js
+import express from "express";
+// ADICIONADO (aula 11): headers de segurança HTTP e política de CORS.
+import helmet from "helmet";
+import corsConfig from "./config/cors.js";
+// ADICIONADO: interface Swagger UI e especificação gerada pelo swagger-jsdoc.
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger.js";
+import prisma from "./config/database.js";
+import v1Routes from "./api/v1/routes/index.js";
+// ADICIONADO: importa V2; os arquivos e o roteador da V1 permanecem intactos.
+import v2Routes from "./api/v2/routes/index.js";
+import errorHandler, { notFoundHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
 
-// Middleware para parsing JSON
-app.use(express.json());
+// ADICIONADO (aula 11): antes de tudo, para que toda resposta (inclusive erros) receba os headers.
+app.use(helmet());
+// ADICIONADO (aula 11): responde ao preflight antes das rotas e do parser de JSON.
+app.use(corsConfig);
+app.use(express.json({ limit: "100kb" }));
 
+// ADICIONADO: o mesmo objeto alimenta o JSON e a interface; nada é duplicado.
+app.get("/api-docs.json", (_req, res) => {
+  res.status(200).json(swaggerSpec);
+});
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "API Gerador de Provas - Documentação",
+  }),
+);
+
+// ADICIONADO: schema e operação de /health; as respostas 200 e 503 têm o mesmo formato.
 /**
- * Verifica se a API e o banco de dados estão disponíveis.
- * @param {Object} req - Requisição Express recebida na rota de saúde.
- * @param {Object} res - Resposta Express que informa o estado dos serviços.
- * @returns {Promise<void>} Envia `200` quando o banco responde ou `503` quando há falha.
+ * @swagger
+ * components:
+ *   schemas:
+ *     HealthResponse:
+ *       type: object
+ *       required: [status, message, version, availableVersions, services]
+ *       properties:
+ *         status:
+ *           type: string
+ *           enum: [OK, DEGRADED]
+ *           example: OK
+ *         message:
+ *           type: string
+ *           example: API do Gerador de Provas
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *           description: Presente somente quando o banco respondeu (200).
+ *         version:
+ *           type: string
+ *           example: "1.0.0"
+ *         availableVersions:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [v1, v2]
+ *         services:
+ *           type: object
+ *           properties:
+ *             api:
+ *               type: string
+ *               example: OK
+ *             database:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   enum: [OK, ERROR]
+ *                   example: OK
+ * /health:
+ *   get:
+ *     summary: Verifica a saúde da API e do banco
+ *     description: Executa SELECT 1 no banco. Responde 503 quando a API está no ar, mas o banco não respondeu.
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API e banco disponíveis
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ *       503:
+ *         description: API em execução com banco indisponível (status DEGRADED)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
  */
-app.get('/health', async (req, res) => {
-  let databaseStatus = 'OK';
-  let databaseMessage = 'Conexão com banco de dados funcionando';
-
+/** Health check: preserva o contrato de monitoramento 200/503 da Aula 05. */
+app.get("/health", async (_req, res) => {
   try {
-    // Tenta fazer uma query simples no banco
     await prisma.$queryRaw`SELECT 1`;
-  } catch (error) {
-    databaseStatus = 'ERROR';
-    databaseMessage = 'Falha na conexão com banco de dados';
-    console.error('Erro na verificação do banco:', error);
-  }
 
-  // Define o status HTTP baseado na saúde do banco
-  const httpStatus = databaseStatus === 'OK' ? 200 : 503;
-
-  res.status(httpStatus).json({
-    status: databaseStatus === 'OK' ? 'OK' : 'DEGRADED',
-    message: 'API do Gerador de Provas',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    services: {
-      api: 'OK',
-      database: {
-        status: databaseStatus,
-        message: databaseMessage,
+    return res.status(200).json({
+      status: "OK",
+      message: "API do Gerador de Provas",
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+      // MODIFICADO: anuncia V2 também, sem mudar o resultado 200/503.
+      availableVersions: ["v1", "v2"],
+      services: {
+        api: "OK",
+        database: { status: "OK" },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Erro na verificação do banco:", error);
+
+    return res.status(503).json({
+      status: "DEGRADED",
+      message: "API do Gerador de Provas",
+      version: "1.0.0",
+      // MODIFICADO: anuncia V2 também, sem mudar o resultado 200/503.
+      availableVersions: ["v1", "v2"],
+      services: {
+        api: "OK",
+        database: { status: "ERROR" },
+      },
+    });
+  }
 });
 
-// Rotas da API
-app.use('/users', userRoutes);
-app.use('/subjects', subjectRoutes);
-app.use('/questions', questionRoutes);
+app.use("/v1", v1Routes);
+// ADICIONADO: monta somente a V2; não modifica nem deprecia a montagem V1.
+app.use("/v2", v2Routes);
 
-/**
- * Trata requisições que não corresponderam a nenhuma rota registrada.
- * @param {Object} req - Requisição Express com o método e a URL solicitada.
- * @param {Object} res - Resposta Express usada para devolver o erro `404`.
- * @returns {void} Envia uma resposta JSON informando a rota não encontrada.
- */
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Rota ${req.method} ${req.originalUrl} não encontrada`,
-  });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
-// Export default para ES Modules
 export default app;

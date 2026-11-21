@@ -1,0 +1,5 @@
+name: Producao
+variables:
+  - name: baseUrl
+    value: https://seu-projeto.vercel.app
+    description: "Troque pelo domínio que a Vercel gerou para o seu projeto"
