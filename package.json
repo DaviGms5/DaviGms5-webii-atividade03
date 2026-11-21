@@ -5,18 +5,24 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node src/server.js",
     "dev": "nodemon --watch src --watch generated/prisma --ext js,ts,json --exec tsx src/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:pratica": "vitest run --exclude tests/swagger.test.js && vitest run tests/swagger.test.js -t Prática",
-    "test:atividade": "vitest run tests/swagger.test.js -t Atividade",
+    "test:pratica": "vitest run --exclude tests/deploy.test.js && vitest run tests/deploy.test.js -t Prática",
+    "test:atividade": "vitest run tests/deploy.test.js -t Atividade",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "fixtures:upload": "node tests/fixtures/createUploadFixtures.js",
-    "serve:avaliacao": "tsx tests/serve-evaluation.js"
+    "serve:avaliacao": "tsx tests/serve-evaluation.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "vercel-build": "npm run db:generate && npm run db:migrate"
   },
   "repository": {
     "type": "git",
@@ -25,6 +31,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "26.x"
+  },
   "bugs": {
     "url": "https://github.com/arthurfporto/26-webii-api/issues"
   },
@@ -33,16 +42,16 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@uploadcare/upload-client": "6.23.0",
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.6",
+    "bcrypt": "6.0.0",
+    "cors": "2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "helmet": "^8.3.0",
-    "jsonwebtoken": "^9.0.3",
+    "helmet": "8.3.0",
+    "jsonwebtoken": "9.0.3",
     "multer": "2.4.0",
     "pg": "^8.23.0",
-    "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1",
+    "swagger-jsdoc": "6.3.0",
+    "swagger-ui-express": "5.0.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -59,7 +68,8 @@
     "prisma": "^7.9.1",
     "supertest": "^7.2.2",
     "tsx": "^4.23.12",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "yaml": "2.9.1"
   },
   "allowScripts": {
     "@prisma/engines@7.9.1": true,

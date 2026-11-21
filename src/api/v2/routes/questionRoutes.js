@@ -1,17 +1,16 @@
 // ADICIONADO: módulo V2 de questões; não altera arquivos ou regras da V1.
 import express from "express";
-// ADICIONADO (aula 11): autenticação (quem é) e autorização (o que pode fazer).
+import stableQuestionRoutes from "../../v1/routes/questionRoutes.js";
+// ADICIONADO (aula 11): autenticação e papéis aplicados antes de delegar às rotas estáveis.
 import authenticate from "../../../middlewares/auth.js";
 import authorize, { isAdmin } from "../../../middlewares/authorize.js";
-import stableQuestionRoutes from "../../v1/routes/questionRoutes.js";
 
 const router = express.Router();
 
-// ADICIONADO (aula 11): leitura (GET) segue pública; só as escritas passam por token.
-// POST e PATCH: PROFESSOR ou ADMIN.
+// ADICIONADO (aula 11): leitura continua pública; escrever exige token de PROFESSOR ou ADMIN.
 router.post("/", authenticate, authorize("PROFESSOR", "ADMIN"));
 router.patch("/:id", authenticate, authorize("PROFESSOR", "ADMIN"));
-// DELETE: exclusivo de ADMIN.
+// ADICIONADO (aula 11): remover é uma ação crítica, reservada ao ADMIN.
 router.delete("/:id", authenticate, isAdmin);
 
 // ADICIONADO: reaproveita integralmente o contrato estável de Question.
