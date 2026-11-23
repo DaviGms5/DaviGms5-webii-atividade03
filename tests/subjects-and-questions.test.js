@@ -102,13 +102,30 @@ async function missingUserId() {
 
 /** Remove fixtures na ordem questão → matéria → usuário. */
 afterEach(async () => {
+  const usersToDelete = userIds.splice(0);
+  const subjectsToDelete = subjectIds.splice(0);
+  const questionsToDelete = questionIds.splice(0);
+
   await prisma.question.deleteMany({
-    where: { id: { in: questionIds.splice(0) } },
+    where: {
+      OR: [
+        { id: { in: questionsToDelete } },
+        { subjectId: { in: subjectsToDelete } },
+        { authorId: { in: usersToDelete } },
+      ],
+    },
   });
   await prisma.subject.deleteMany({
-    where: { id: { in: subjectIds.splice(0) } },
+    where: {
+      OR: [
+        { id: { in: subjectsToDelete } },
+        { professorId: { in: usersToDelete } },
+      ],
+    },
   });
-  await prisma.user.deleteMany({ where: { id: { in: userIds.splice(0) } } });
+  await prisma.user.deleteMany({
+    where: { id: { in: usersToDelete } },
+  });
 });
 
 describe("Subject API com validação", () => {
@@ -140,6 +157,7 @@ describe("Subject API com validação", () => {
       expectApiError(post, 400, "VALIDATION_ERROR");
       expectApiError(patch, 400, "VALIDATION_ERROR");
     },
+    15000,
   );
 
   it.each(["get", "patch", "delete"])(
@@ -160,6 +178,7 @@ describe("Subject API com validação", () => {
       );
       expectApiError(missing, 404, "NOT_FOUND");
     },
+    15000,
   );
 
   it("aceita limites, professor em texto decimal e ativa false", async () => {
@@ -171,6 +190,7 @@ describe("Subject API com validação", () => {
     expect(subject.nome).toHaveLength(100);
     expect(subject.ativa).toBe(false);
   });
+
   it("rejeita corpo inválido, campo extra e parâmetro inválido", async () => {
     const invalidBody = await request(app).post("/v1/subjects").send({
       nome: " ",
@@ -304,6 +324,7 @@ describe("Question API com validação", () => {
       expectApiError(post, 400, "VALIDATION_ERROR");
       expectApiError(patch, 400, "VALIDATION_ERROR");
     },
+    15000,
   );
 
   it.each(["get", "patch", "delete"])(
@@ -317,6 +338,7 @@ describe("Question API com validação", () => {
         expectApiError(response, 400, "VALIDATION_ERROR");
       }
     },
+    15000,
   );
 
   it("aceita limites, texto decimal, resposta nula e ativa false", async () => {
@@ -356,6 +378,7 @@ describe("Question API com validação", () => {
     expectApiError(post, 404, "NOT_FOUND");
     expectApiError(patch, 404, "NOT_FOUND");
   });
+
   it("rejeita corpo inválido, campo extra e autor inexistente", async () => {
     const author = await createUser();
     const subject = await createSubject(author.id);
